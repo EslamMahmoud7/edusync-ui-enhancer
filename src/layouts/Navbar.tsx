@@ -1,0 +1,200 @@
+
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Bell, Search, LogOut, Menu, AlertCircle } from "lucide-react";
+
+interface NavbarProps {
+  toggleSidebar: () => void;
+  role: "student" | "admin";
+}
+
+export default function Navbar({ toggleSidebar, role }: NavbarProps) {
+  const navigate = useNavigate();
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const handleLogout = () => {
+    navigate("/login");
+  };
+
+  const notifications = [
+    {
+      id: 101,
+      title: "Assignment Deadline",
+      message: "Math assignment due tomorrow.",
+      time: "20 min ago",
+      read: false,
+      type: "assignment",
+    },
+    {
+      id: 102,
+      title: "Class Cancelled",
+      message: "Physics lecture has been cancelled.",
+      time: "2 hrs ago",
+      read: true,
+      type: "system",
+    },
+    {
+      id: 103,
+      title: "Grade Released",
+      message: "Your English essay has been graded.",
+      time: "Yesterday",
+      read: true,
+      type: "system",
+    },
+  ];
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  return (
+    <nav className="sticky top-0 z-40 backdrop-blur-lg bg-white/80 border-b border-gray-200/50 shadow-soft">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Left Section */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={toggleSidebar}
+              className="p-2 rounded-lg text-gray-600 hover:text-edusync-primary hover:bg-edusync-primary/10 transition-all duration-200 transform hover:scale-105 active:scale-95"
+              aria-label="Toggle Sidebar"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="flex items-center gap-3 group"
+            >
+              <div className="relative">
+                <img 
+                  src="/favicon.ico" 
+                  alt="EduSync Logo" 
+                  className="h-9 w-9 transition-transform duration-200 group-hover:scale-110" 
+                />
+                <div className="absolute inset-0 bg-edusync-primary/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 blur-sm"></div>
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-edusync-primary to-edusync-accent bg-clip-text text-transparent hidden sm:block group-hover:animate-bounce-gentle">
+                EduSync
+              </span>
+            </button>
+          </div>
+
+          {/* Center Search */}
+          <div className="flex-1 max-w-md mx-8 hidden md:block">
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400 group-focus-within:text-edusync-primary transition-colors duration-200" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search courses, materials, students..."
+                className="block w-full pl-10 pr-4 py-2.5 bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-edusync-primary/20 focus:border-edusync-primary transition-all duration-200 hover:bg-white/80"
+              />
+            </div>
+          </div>
+
+          {/* Right Section */}
+          <div className="flex items-center gap-2">
+            {/* Mobile Search */}
+            <button className="p-2 rounded-lg text-gray-600 hover:text-edusync-primary hover:bg-edusync-primary/10 transition-all duration-200 md:hidden">
+              <Search className="h-5 w-5" />
+            </button>
+
+            {/* Notifications */}
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2 rounded-lg text-gray-600 hover:text-edusync-warning hover:bg-edusync-warning/10 transition-all duration-200 transform hover:scale-105 active:scale-95"
+              >
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-edusync-error to-red-500 text-white text-xs font-medium rounded-full flex items-center justify-center animate-bounce-gentle">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Notifications Dropdown */}
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 animate-scale-in">
+                  <div className="bg-white/95 backdrop-blur-lg border border-gray-200/50 rounded-2xl shadow-glass overflow-hidden">
+                    <div className="p-4 bg-gradient-to-r from-edusync-primary/5 to-edusync-accent/5 border-b border-gray-200/50">
+                      <h4 className="font-semibold text-gray-800 text-sm">
+                        Notifications
+                      </h4>
+                    </div>
+                    
+                    <div className="max-h-64 overflow-y-auto">
+                      {notifications.map((notification, index) => (
+                        <div
+                          key={notification.id}
+                          className={`p-4 border-b border-gray-100/50 last:border-b-0 hover:bg-gray-50/50 transition-colors duration-200 ${
+                            !notification.read ? "bg-edusync-primary/5" : ""
+                          }`}
+                          style={{ animationDelay: `${index * 50}ms` }}
+                        >
+                          <div className="flex justify-between items-start gap-2">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-medium text-gray-800 text-sm">
+                                  {notification.title}
+                                </span>
+                                {!notification.read && (
+                                  <div className="w-2 h-2 bg-edusync-primary rounded-full"></div>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-600 mb-2">
+                                {notification.message}
+                              </p>
+                              {notification.type === "assignment" && (
+                                <div className="flex items-center gap-1 text-edusync-error">
+                                  <AlertCircle className="h-3 w-3" />
+                                  <span className="text-xs font-medium">Action Required</span>
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-xs text-gray-500 whitespace-nowrap">
+                              {notification.time}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="p-3 bg-gray-50/50 border-t border-gray-200/50">
+                      <button
+                        onClick={() => {
+                          const path = role === "admin" ? "/admin/notifications" : "/notifications";
+                          navigate(path);
+                          setShowNotifications(false);
+                        }}
+                        className="w-full text-center text-sm text-edusync-primary hover:text-edusync-accent font-medium transition-colors duration-200"
+                      >
+                        View All Notifications →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Logout */}
+            <button
+              onClick={handleLogout}
+              className="p-2 rounded-lg text-gray-600 hover:text-edusync-error hover:bg-edusync-error/10 transition-all duration-200 transform hover:scale-105 active:scale-95"
+              title="Logout"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Click outside overlay */}
+      {showNotifications && (
+        <div
+          className="fixed inset-0 z-30"
+          onClick={() => setShowNotifications(false)}
+        />
+      )}
+    </nav>
+  );
+}
