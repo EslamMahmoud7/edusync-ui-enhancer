@@ -8,6 +8,10 @@ import { AuthProvider } from "./Context/useAuth";
 import Layout from "./layouts/Layout";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import Login from "./pages/Auth/Login";
+import CoursesPage from "./pages/Student/CoursesPage";
+import AssignmentsPage from "./pages/Student/AssignmentsPage";
+import Profile from "./pages/Student/Profile";
 
 const queryClient = new QueryClient();
 
@@ -19,11 +23,13 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            <Route path="/login" element={<Login />} />
             <Route path="/" element={<Layout />}>
               <Route index element={<Index />} />
-              {/* Add your protected routes here */}
+              <Route path="courses" element={<CoursesPage />} />
+              <Route path="assignments" element={<AssignmentsPage />} />
+              <Route path="profile" element={<Profile />} />
             </Route>
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
