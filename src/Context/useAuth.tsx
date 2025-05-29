@@ -2,15 +2,16 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface User {
-  id: string;
+  id?: string;
   name: string;
-  email: string;
+  email?: string;
   role: 'admin' | 'student';
+  token?: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (userData: { name: string; role: 'admin' | 'student'; token: string }) => void;
   logout: () => void;
   loading: boolean;
 }
@@ -34,31 +35,34 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading user from localStorage or API
-    const savedUser = localStorage.getItem('user');
+    // Check for saved user from localStorage
+    const savedUser = localStorage.getItem('eduSyncUser');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        const userData = JSON.parse(savedUser);
+        setUser({
+          id: userData.id,
+          name: `${userData.firstName} ${userData.lastName}`,
+          email: userData.email,
+          role: 'student', // Default role, will be updated on login
+          token: userData.token
+        });
+      } catch (error) {
+        console.error('Error parsing saved user:', error);
+        localStorage.removeItem('eduSyncUser');
+      }
     }
     setLoading(false);
   }, []);
 
-  const login = async (email: string, password: string) => {
-    setLoading(true);
-    // Simulate API call
-    const mockUser: User = {
-      id: '1',
-      name: 'John Doe',
-      email,
-      role: email.includes('admin') ? 'admin' : 'student'
-    };
-    setUser(mockUser);
-    localStorage.setItem('user', JSON.stringify(mockUser));
+  const login = (userData: { name: string; role: 'admin' | 'student'; token: string }) => {
+    setUser(userData);
     setLoading(false);
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('user');
+    localStorage.removeItem('eduSyncUser');
   };
 
   return (

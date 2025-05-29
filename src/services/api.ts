@@ -11,7 +11,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Get token from localStorage - FIX: Parse the user object first
-    const userString = localStorage.getItem('user');
+    const userString = localStorage.getItem('eduSyncUser');
     let token = null;
     
     if (userString) {
