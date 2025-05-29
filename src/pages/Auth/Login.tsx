@@ -1,4 +1,3 @@
-
 import { useState, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
@@ -71,17 +70,19 @@ const Login: React.FC = () => {
       localStorage.setItem(
         "eduSyncUser",
         JSON.stringify({
-          id:        data.id,
+          id: data.id,
           firstName: data.firstName,
-          lastName:  data.lastName,
-          email:     data.email,
-          token:     data.token
+          lastName: data.lastName,
+          email: data.email,
+          token: data.token
         })
       );
       
       // 5) update your auth context
       login({
+        id: data.id,
         name: `${data.firstName} ${data.lastName}`,
+        email: data.email,
         role: userRole,
         token: data.token,
       });
