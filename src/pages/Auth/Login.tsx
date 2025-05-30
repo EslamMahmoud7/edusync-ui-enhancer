@@ -88,7 +88,7 @@ const Login: React.FC = () => {
       });
 
       // 6) navigate based on the role
-      navigate(userRole === "admin" ? "/admin/dashboard" : "/dashboard");
+      navigate(userRole === "admin" ? "/admin/" : "/");
     } catch (err: any) {
       setError(err.message || "Login failed");
     } finally {

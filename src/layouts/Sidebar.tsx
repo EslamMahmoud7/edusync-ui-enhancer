@@ -3,7 +3,6 @@ import { forwardRef, useEffect, useState, useCallback } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   User,
-  LayoutDashboard,
   BookOpen,
   CalendarDays,
   CreditCard,
@@ -34,12 +33,6 @@ interface MenuItem {
 
 const adminMenu: MenuItem[] = [
   { label: "Profile", path: "/admin/profile", icon: <User size={18} /> },
-  {
-    label: "Dashboard",
-    path: "/admin/dashboard",
-    icon: <LayoutDashboard size={18} />,
-    badge: "Overview"
-  },
   {
     label: "Students",
     path: "/admin/students",
@@ -80,12 +73,6 @@ const adminMenu: MenuItem[] = [
 
 const studentMenu: MenuItem[] = [
   { label: "Profile", path: "/profile", icon: <User size={18} /> },
-  {
-    label: "Dashboard",
-    path: "/dashboard",
-    icon: <LayoutDashboard size={18} />,
-    badge: "Home"
-  },
   { 
     label: "Courses", 
     path: "/courses", 

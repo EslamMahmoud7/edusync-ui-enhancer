@@ -60,7 +60,7 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
             </button>
             
             <button
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/")}
               className="flex items-center gap-3 group"
             >
               <div className="relative">

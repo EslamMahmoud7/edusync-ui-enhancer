@@ -92,7 +92,7 @@ const Index = () => {
     {
       title: "Pending Assignments",
       value: dash?.pendingAssignments?.toString() || "0",
-      change: "-2",
+      change: "0",
       icon: <FileText className="h-6 w-6" />,
       color: "from-edusync-warning to-orange-600"
     },
