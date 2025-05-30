@@ -31,7 +31,7 @@ export default function Layout() {
   const role = user?.role === "admin" ? "admin" : "student";
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-edusync-surface via-white to-edusync-surface/50">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-edusync-surface via-white to-edusync-surface/50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900/50">
       {/* Enhanced background pattern */}
       <div className="fixed inset-0 opacity-5 pointer-events-none">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,theme(colors.edusync.primary)_0%,transparent_50%)]"></div>

@@ -1,0 +1,60 @@
+
+{
+  "navigation": {
+    "home": "الرئيسية",
+    "courses": "المقررات",
+    "assignments": "الواجبات",
+    "schedule": "الجدول",
+    "profile": "الملف الشخصي",
+    "logout": "تسجيل الخروج",
+    "notifications": "الإشعارات"
+  },
+  "dashboard": {
+    "welcome": "مرحباً بعودتك، {{name}}",
+    "subtitle": "لوحة التحكم التعليمية الشاملة مع التحديثات الفورية والتصميم العصري",
+    "activeCourses": "المقررات النشطة",
+    "currentGPA": "المعدل التراكمي",
+    "pendingAssignments": "الواجبات المعلقة",
+    "todaysClasses": "محاضرات اليوم",
+    "viewFullSchedule": "عرض الجدول الكامل",
+    "myAchievements": "إنجازاتي",
+    "upcomingAssignments": "الواجبات القادمة",
+    "announcements": "الإعلانات",
+    "noClassesToday": "لا توجد محاضرات اليوم",
+    "noAchievements": "لا توجد إنجازات بعد",
+    "noUpcomingAssignments": "لا توجد واجبات قادمة",
+    "noAnnouncements": "لا توجد إعلانات",
+    "loading": "جاري التحميل...",
+    "errorLoading": "خطأ في تحميل لوحة التحكم"
+  },
+  "schedule": {
+    "title": "جدول المحاضرات",
+    "subtitle": "إدارة جدولك الأكاديمي",
+    "searchPlaceholder": "البحث في المحاضرات...",
+    "calendar": "التقويم",
+    "table": "الجدول",
+    "weekOf": "أسبوع {{date}}",
+    "noClassesScheduled": "لا توجد محاضرات مجدولة لهذا اليوم",
+    "completeOverview": "نظرة شاملة على جميع محاضراتك",
+    "date": "التاريخ",
+    "day": "اليوم",
+    "time": "الوقت",
+    "subject": "المقرر",
+    "room": "القاعة",
+    "instructor": "المدرس"
+  },
+  "announcements": {
+    "title": "إعلان",
+    "close": "إغلاق",
+    "readMore": "اقرأ المزيد",
+    "viewAll": "عرض جميع الإعلانات"
+  },
+  "common": {
+    "search": "بحث",
+    "settings": "الإعدادات",
+    "theme": "المظهر",
+    "language": "اللغة",
+    "darkMode": "الوضع المظلم",
+    "lightMode": "الوضع المضيء"
+  }
+}

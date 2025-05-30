@@ -1,0 +1,60 @@
+
+{
+  "navigation": {
+    "home": "Home",
+    "courses": "Courses",
+    "assignments": "Assignments",
+    "schedule": "Schedule",
+    "profile": "Profile",
+    "logout": "Logout",
+    "notifications": "Notifications"
+  },
+  "dashboard": {
+    "welcome": "Welcome back, {{name}}",
+    "subtitle": "Your comprehensive educational dashboard with real-time updates and modern design",
+    "activeCourses": "Active Courses",
+    "currentGPA": "Current GPA",
+    "pendingAssignments": "Pending Assignments",
+    "todaysClasses": "Today's Classes",
+    "viewFullSchedule": "View Full Schedule",
+    "myAchievements": "My Achievements",
+    "upcomingAssignments": "Upcoming Assignments",
+    "announcements": "Announcements",
+    "noClassesToday": "No classes today",
+    "noAchievements": "No achievements yet",
+    "noUpcomingAssignments": "No upcoming assignments",
+    "noAnnouncements": "No announcements",
+    "loading": "Loading...",
+    "errorLoading": "Error Loading Dashboard"
+  },
+  "schedule": {
+    "title": "Class Schedule",
+    "subtitle": "Manage your academic timetable",
+    "searchPlaceholder": "Search classes...",
+    "calendar": "Calendar",
+    "table": "Table",
+    "weekOf": "Week of {{date}}",
+    "noClassesScheduled": "No classes scheduled for this day",
+    "completeOverview": "Complete overview of all your classes",
+    "date": "Date",
+    "day": "Day",
+    "time": "Time",
+    "subject": "Subject",
+    "room": "Room",
+    "instructor": "Instructor"
+  },
+  "announcements": {
+    "title": "Announcement",
+    "close": "Close",
+    "readMore": "Read More",
+    "viewAll": "View All Announcements"
+  },
+  "common": {
+    "search": "Search",
+    "settings": "Settings",
+    "theme": "Theme",
+    "language": "Language",
+    "darkMode": "Dark Mode",
+    "lightMode": "Light Mode"
+  }
+}

@@ -1,7 +1,10 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Search, LogOut, Menu, AlertCircle } from "lucide-react";
+import { Bell, Search, LogOut, Menu, AlertCircle, Moon, Sun, Globe } from "lucide-react";
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface NavbarProps {
   toggleSidebar: () => void;
@@ -10,7 +13,11 @@ interface NavbarProps {
 
 export default function Navbar({ toggleSidebar, role }: NavbarProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { isDark, toggleTheme } = useTheme();
+  const { currentLanguage, changeLanguage, isRTL } = useLanguage();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
 
   const handleLogout = () => {
     navigate("/login");
@@ -46,14 +53,14 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
-    <nav className="sticky top-0 z-40 backdrop-blur-lg bg-white/80 border-b border-gray-200/50 shadow-soft">
+    <nav className="sticky top-0 z-40 backdrop-blur-lg bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/50 dark:border-gray-700/50 shadow-soft">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Left Section */}
-          <div className="flex items-center gap-4">
+          <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
             <button
               onClick={toggleSidebar}
-              className="p-2 rounded-lg text-gray-600 hover:text-edusync-primary hover:bg-edusync-primary/10 transition-all duration-200 transform hover:scale-105 active:scale-95"
+              className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-edusync-primary hover:bg-edusync-primary/10 transition-all duration-200 transform hover:scale-105 active:scale-95"
               aria-label="Toggle Sidebar"
             >
               <Menu className="h-5 w-5" />
@@ -80,29 +87,76 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
           {/* Center Search */}
           <div className="flex-1 max-w-md mx-8 hidden md:block">
             <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <div className={`absolute inset-y-0 ${isRTL ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none`}>
                 <Search className="h-5 w-5 text-gray-400 group-focus-within:text-edusync-primary transition-colors duration-200" />
               </div>
               <input
                 type="text"
-                placeholder="Search courses, materials, students..."
-                className="block w-full pl-10 pr-4 py-2.5 bg-white/60 backdrop-blur-sm border border-gray-200/60 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-edusync-primary/20 focus:border-edusync-primary transition-all duration-200 hover:bg-white/80"
+                placeholder={t('common.search')}
+                className={`block w-full ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2.5 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200/60 dark:border-gray-600/60 rounded-xl text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-edusync-primary/20 focus:border-edusync-primary transition-all duration-200 hover:bg-white/80 dark:hover:bg-gray-800/80`}
               />
             </div>
           </div>
 
           {/* Right Section */}
-          <div className="flex items-center gap-2">
+          <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
             {/* Mobile Search */}
-            <button className="p-2 rounded-lg text-gray-600 hover:text-edusync-primary hover:bg-edusync-primary/10 transition-all duration-200 md:hidden">
+            <button className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-edusync-primary hover:bg-edusync-primary/10 transition-all duration-200 md:hidden">
               <Search className="h-5 w-5" />
+            </button>
+
+            {/* Language Selector */}
+            <div className="relative">
+              <button
+                onClick={() => setShowLanguageMenu(!showLanguageMenu)}
+                className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-edusync-primary hover:bg-edusync-primary/10 transition-all duration-200"
+              >
+                <Globe className="h-5 w-5" />
+              </button>
+
+              {showLanguageMenu && (
+                <div className={`absolute ${isRTL ? 'left-0' : 'right-0'} mt-2 w-32 animate-scale-in`}>
+                  <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg border border-gray-200/50 dark:border-gray-600/50 rounded-xl shadow-glass overflow-hidden">
+                    <button
+                      onClick={() => {
+                        changeLanguage('en');
+                        setShowLanguageMenu(false);
+                      }}
+                      className={`w-full px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                        currentLanguage === 'en' ? 'bg-edusync-primary/10 text-edusync-primary' : 'text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      English
+                    </button>
+                    <button
+                      onClick={() => {
+                        changeLanguage('ar');
+                        setShowLanguageMenu(false);
+                      }}
+                      className={`w-full px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                        currentLanguage === 'ar' ? 'bg-edusync-primary/10 text-edusync-primary' : 'text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      العربية
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-edusync-primary hover:bg-edusync-primary/10 transition-all duration-200"
+            >
+              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
 
             {/* Notifications */}
             <div className="relative">
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2 rounded-lg text-gray-600 hover:text-edusync-warning hover:bg-edusync-warning/10 transition-all duration-200 transform hover:scale-105 active:scale-95"
+                className="relative p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-edusync-warning hover:bg-edusync-warning/10 transition-all duration-200 transform hover:scale-105 active:scale-95"
               >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
@@ -112,13 +166,12 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
                 )}
               </button>
 
-              {/* Notifications Dropdown */}
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 animate-scale-in">
-                  <div className="bg-white/95 backdrop-blur-lg border border-gray-200/50 rounded-2xl shadow-glass overflow-hidden">
-                    <div className="p-4 bg-gradient-to-r from-edusync-primary/5 to-edusync-accent/5 border-b border-gray-200/50">
-                      <h4 className="font-semibold text-gray-800 text-sm">
-                        Notifications
+                <div className={`absolute ${isRTL ? 'left-0' : 'right-0'} mt-2 w-80 animate-scale-in`}>
+                  <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg border border-gray-200/50 dark:border-gray-600/50 rounded-2xl shadow-glass overflow-hidden">
+                    <div className="p-4 bg-gradient-to-r from-edusync-primary/5 to-edusync-accent/5 border-b border-gray-200/50 dark:border-gray-600/50">
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 text-sm">
+                        {t('navigation.notifications')}
                       </h4>
                     </div>
                     
@@ -126,7 +179,7 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
                       {notifications.map((notification, index) => (
                         <div
                           key={notification.id}
-                          className={`p-4 border-b border-gray-100/50 last:border-b-0 hover:bg-gray-50/50 transition-colors duration-200 ${
+                          className={`p-4 border-b border-gray-100/50 dark:border-gray-700/50 last:border-b-0 hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors duration-200 ${
                             !notification.read ? "bg-edusync-primary/5" : ""
                           }`}
                           style={{ animationDelay: `${index * 50}ms` }}
@@ -134,14 +187,14 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
                           <div className="flex justify-between items-start gap-2">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
-                                <span className="font-medium text-gray-800 text-sm">
+                                <span className="font-medium text-gray-800 dark:text-gray-200 text-sm">
                                   {notification.title}
                                 </span>
                                 {!notification.read && (
                                   <div className="w-2 h-2 bg-edusync-primary rounded-full"></div>
                                 )}
                               </div>
-                              <p className="text-xs text-gray-600 mb-2">
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
                                 {notification.message}
                               </p>
                               {notification.type === "assignment" && (
@@ -151,7 +204,7 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
                                 </div>
                               )}
                             </div>
-                            <span className="text-xs text-gray-500 whitespace-nowrap">
+                            <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
                               {notification.time}
                             </span>
                           </div>
@@ -159,7 +212,7 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
                       ))}
                     </div>
                     
-                    <div className="p-3 bg-gray-50/50 border-t border-gray-200/50">
+                    <div className="p-3 bg-gray-50/50 dark:bg-gray-700/50 border-t border-gray-200/50 dark:border-gray-600/50">
                       <button
                         onClick={() => {
                           const path = role === "admin" ? "/admin/notifications" : "/notifications";
@@ -168,7 +221,7 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
                         }}
                         className="w-full text-center text-sm text-edusync-primary hover:text-edusync-accent font-medium transition-colors duration-200"
                       >
-                        View All Notifications →
+                        {t('announcements.viewAll')} →
                       </button>
                     </div>
                   </div>
@@ -179,8 +232,8 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
             {/* Logout */}
             <button
               onClick={handleLogout}
-              className="p-2 rounded-lg text-gray-600 hover:text-edusync-error hover:bg-edusync-error/10 transition-all duration-200 transform hover:scale-105 active:scale-95"
-              title="Logout"
+              className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-edusync-error hover:bg-edusync-error/10 transition-all duration-200 transform hover:scale-105 active:scale-95"
+              title={t('navigation.logout')}
             >
               <LogOut className="h-5 w-5" />
             </button>
@@ -188,11 +241,14 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
         </div>
       </div>
 
-      {/* Click outside overlay */}
-      {showNotifications && (
+      {/* Click outside overlays */}
+      {(showNotifications || showLanguageMenu) && (
         <div
           className="fixed inset-0 z-30"
-          onClick={() => setShowNotifications(false)}
+          onClick={() => {
+            setShowNotifications(false);
+            setShowLanguageMenu(false);
+          }}
         />
       )}
     </nav>
