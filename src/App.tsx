@@ -78,11 +78,36 @@ const App = () => (
                         <SchedulePage />
                       </RoleGuard>
                     } />
+                    <Route path="academicRecords" element={
+                      <RoleGuard allowedRoles={[0, 1]}>
+                        <StudentAcademicRecords />
+                      </RoleGuard>
+                    } />
 
                     {/* Admin routes */}
                     <Route path="admin-dashboard" element={
                       <RoleGuard allowedRoles={[2]}>
                         <AdminDashboard />
+                      </RoleGuard>
+                    } />
+                    <Route path="admin/academic-records" element={
+                      <RoleGuard allowedRoles={[2]}>
+                        <AcademicRecords />
+                      </RoleGuard>
+                    } />
+                    <Route path="admin/courses" element={
+                      <RoleGuard allowedRoles={[2]}>
+                        <CourseManagement />
+                      </RoleGuard>
+                    } />
+                    <Route path="admin/groups" element={
+                      <RoleGuard allowedRoles={[2]}>
+                        <GroupManagement />
+                      </RoleGuard>
+                    } />
+                    <Route path="admin/users" element={
+                      <RoleGuard allowedRoles={[2]}>
+                        <UserManagement />
                       </RoleGuard>
                     } />
 

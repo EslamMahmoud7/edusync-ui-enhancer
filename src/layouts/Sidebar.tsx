@@ -1,4 +1,3 @@
-
 import { forwardRef, useEffect, useState, useCallback } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -60,35 +59,24 @@ const adminMenu: MenuItem[] = [
   { label: "Dashboard", path: "/admin-dashboard", icon: <Home size={18} /> },
   { label: "Profile", path: "/profile", icon: <User size={18} /> },
   {
-    label: "Students",
-    path: "/admin/students",
-    icon: <Users size={18} />,
-    badge: "Manage"
+    label: "Academic Records",
+    path: "/admin/academic-records",
+    icon: <BarChart2 size={18} />,
   },
   {
-    label: "Instructors",
-    path: "/admin/instructors",
-    icon: <UserCheck size={18} />,
-  },
-  {
-    label: "Courses",
+    label: "Course Management",
     path: "/admin/courses",
     icon: <BookOpen size={18} />,
   },
   {
-    label: "Groups",
+    label: "Group Management",
     path: "/admin/groups",
     icon: <Users size={18} />,
   },
   {
-    label: "Assignments",
-    path: "/admin/assignments",
-    icon: <ClipboardList size={18} />,
-  },
-  {
-    label: "System Reports",
-    path: "/admin/reports",
-    icon: <BarChart2 size={18} />,
+    label: "User Management",
+    path: "/admin/users",
+    icon: <UserCheck size={18} />,
   },
   {
     label: "Settings",
