@@ -186,16 +186,17 @@ export default function GroupManagement() {
                         </FormControl>
                         <SelectContent>
                         <SelectItem value="none">No instructor assigned</SelectItem>  
-                          <SelectContent>
-  <SelectItem value="">No instructor assigned</SelectItem>
+                        <SelectContent>
+  <SelectItem value="none">No instructor assigned</SelectItem>
   {instructors.map((instructor) => (
     <SelectItem key={instructor.id} value={instructor.id}>
-      {instructor.user
-        ? `${instructor.user.firstName} ${instructor.user.lastName}`
+      {instructor.firstName && instructor.lastName
+        ? `${instructor.firstName} ${instructor.lastName}`
         : "Unknown Instructor"}
     </SelectItem>
   ))}
 </SelectContent>
+
 
                         </SelectContent>
                       </Select>
@@ -391,11 +392,11 @@ export default function GroupManagement() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                      <SelectItem value="none">No instructor assigned</SelectItem>
+  <SelectItem value="none">No instructor assigned</SelectItem>
   {instructors.map((instructor) => (
     <SelectItem key={instructor.id} value={instructor.id}>
-      {instructor.user
-        ? `${instructor.user.firstName} ${instructor.user.lastName}`
+      {instructor.firstName && instructor.lastName
+        ? `${instructor.firstName} ${instructor.lastName}`
         : "Unknown Instructor"}
     </SelectItem>
   ))}

@@ -28,9 +28,8 @@ export interface UpdateUserDTO {
 
 export interface InstructorDTO {
   id: string;
-  userId: string;
-  department: string;
-  specialization: string;
-  hireDate: string;
-  user: UserDTO;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
 }
