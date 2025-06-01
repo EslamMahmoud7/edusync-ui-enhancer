@@ -1,7 +1,7 @@
 
 import { useState, useEffect, ReactNode } from "react";
 import { AuthContext } from "./auth-context";
-import type { AuthContextType, User } from "./auth-types";
+import type { AuthContextType, User, UserDTO } from "./auth-types";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -12,12 +12,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const savedUser = localStorage.getItem('eduSyncUser');
     if (savedUser) {
       try {
-        const userData = JSON.parse(savedUser);
+        const userData: UserDTO = JSON.parse(savedUser);
         setUser({
           id: userData.id,
           name: `${userData.firstName} ${userData.lastName}`,
           email: userData.email,
-          role: 'student', // Default role, will be updated on login
+          role: userData.role,
           token: userData.token
         });
       } catch (error) {

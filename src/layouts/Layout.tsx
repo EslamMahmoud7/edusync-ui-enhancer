@@ -27,8 +27,8 @@ export default function Layout() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // fall back to "student" if no user or role
-  const role = user?.role === "admin" ? "admin" : "student";
+  // Default to student role if no user or role
+  const role = user?.role || 1;
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-edusync-surface via-white to-edusync-surface/50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900/50">

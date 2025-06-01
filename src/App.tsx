@@ -3,15 +3,19 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./Context/AuthProvider";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import PrivateRoute from "./components/PrivateRoute";
+import RoleGuard from "./components/RoleGuard";
 import Layout from "./layouts/Layout";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Auth/Login";
+import StudentDashboard from "./pages/Student/StudentDashboard";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
+import InstructorDashboard from "./pages/Instructor/InstructorDashboard";
 import CoursesPage from "./pages/Student/CoursesPage";
 import AssignmentsPage from "./pages/Student/AssignmentsPage";
 import Profile from "./pages/Student/Profile";
@@ -33,11 +37,49 @@ const App = () => (
                 <Route path="/login" element={<Login />} />
                 <Route element={<PrivateRoute />}>
                   <Route path="/" element={<Layout />}>
+                    {/* Legacy route - redirect to appropriate dashboard */}
                     <Route index element={<Index />} />
-                    <Route path="courses" element={<CoursesPage />} />
-                    <Route path="assignments" element={<AssignmentsPage />} />
-                    <Route path="profile" element={<Profile />} />
-                    <Route path="schedule" element={<SchedulePage />} />
+                    
+                    {/* Student routes */}
+                    <Route path="student-dashboard" element={
+                      <RoleGuard allowedRoles={[1]}>
+                        <StudentDashboard />
+                      </RoleGuard>
+                    } />
+                    <Route path="courses" element={
+                      <RoleGuard allowedRoles={[1]}>
+                        <CoursesPage />
+                      </RoleGuard>
+                    } />
+                    <Route path="assignments" element={
+                      <RoleGuard allowedRoles={[1]}>
+                        <AssignmentsPage />
+                      </RoleGuard>
+                    } />
+                    <Route path="profile" element={
+                      <RoleGuard allowedRoles={[1, 2, 3]}>
+                        <Profile />
+                      </RoleGuard>
+                    } />
+                    <Route path="schedule" element={
+                      <RoleGuard allowedRoles={[1]}>
+                        <SchedulePage />
+                      </RoleGuard>
+                    } />
+
+                    {/* Admin routes */}
+                    <Route path="admin-dashboard" element={
+                      <RoleGuard allowedRoles={[2]}>
+                        <AdminDashboard />
+                      </RoleGuard>
+                    } />
+
+                    {/* Instructor routes */}
+                    <Route path="instructor-dashboard" element={
+                      <RoleGuard allowedRoles={[3]}>
+                        <InstructorDashboard />
+                      </RoleGuard>
+                    } />
                   </Route>
                 </Route>
                 <Route path="*" element={<NotFound />} />

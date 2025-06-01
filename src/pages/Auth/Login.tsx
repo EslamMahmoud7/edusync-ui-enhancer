@@ -1,17 +1,11 @@
+
 import { useState, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "../../Context/useAuth";
 import { jwtDecode } from "jwt-decode";
 import api from "../../services/api";
-
-interface LoginResponse {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  token: string;
-}
+import type { UserDTO } from "../../Context/auth-types";
 
 const Login: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -40,7 +34,7 @@ const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // client-side validation
+      // Client-side validation
       if (!formData.email.includes("@")) {
         throw new Error("Please enter a valid email address");
       }
@@ -48,49 +42,40 @@ const Login: React.FC = () => {
         throw new Error("Password must be at least 6 characters");
       }
 
-      // 1) call the login endpoint
-      const { data } = await api.post<LoginResponse>(
+      // Call the login endpoint
+      const { data } = await api.post<UserDTO>(
         "/api/StudentAccount/Login",
         { Email: formData.email, Password: formData.password }
       );
 
-      // 2) decode the token
-      const decoded: any = jwtDecode(data.token);
-
-      // 3) extract the userId (if needed) and the role
-      const userId =
-        decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
-        decoded.sub;
-      const roleClaim =
-        decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ||
-        decoded.role;
-      const userRole = String(roleClaim).toLowerCase() as "admin" | "student";
-
-      // 4) persist token+userId into localStorage for later calls
-      localStorage.setItem(
-        "eduSyncUser",
-        JSON.stringify({
-          id: data.id,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-          token: data.token
-        })
-      );
+      // Store user data in localStorage
+      localStorage.setItem("eduSyncUser", JSON.stringify(data));
       
-      // 5) update your auth context
+      // Update auth context
       login({
         id: data.id,
         name: `${data.firstName} ${data.lastName}`,
         email: data.email,
-        role: userRole,
+        role: data.role,
         token: data.token,
       });
 
-      // 6) navigate based on the role
-      navigate(userRole === "admin" ? "/admin/" : "/");
+      // Navigate based on role
+      switch (data.role) {
+        case 1: // Student
+          navigate("/student-dashboard");
+          break;
+        case 2: // Admin
+          navigate("/admin-dashboard");
+          break;
+        case 3: // Instructor
+          navigate("/instructor-dashboard");
+          break;
+        default:
+          navigate("/student-dashboard"); // Default fallback
+      }
     } catch (err: any) {
-      setError(err.message || "Login failed");
+      setError(err.response?.data?.message || err.message || "Login failed");
     } finally {
       setIsLoading(false);
     }
@@ -125,7 +110,7 @@ const Login: React.FC = () => {
                 </span>
               </h1>
               <p className="text-xl text-white/90 leading-relaxed">
-                Your gateway to interactive learning and knowledge sharing. Join thousands of students on their educational journey.
+                Your gateway to group-based learning and knowledge sharing. Join thousands of students on their educational journey.
               </p>
               <div className="flex items-center justify-center gap-4 pt-4">
                 <div className="w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>

@@ -13,14 +13,15 @@ import {
   BarChart2,
   X,
   ChevronDown,
-  ChevronRight,
+  Home,
+  UserCheck,
 } from "lucide-react";
 import { JSX } from "react/jsx-runtime";
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  role: "admin" | "student";
+  role: 1 | 2 | 3; // 1: Student, 2: Admin, 3: Instructor
 }
 
 interface MenuItem {
@@ -31,47 +32,8 @@ interface MenuItem {
   badge?: string;
 }
 
-const adminMenu: MenuItem[] = [
-  { label: "Profile", path: "/admin/profile", icon: <User size={18} /> },
-  {
-    label: "Students",
-    path: "/admin/students",
-    icon: <Users size={18} />,
-    badge: "Manage"
-  },
-  {
-    label: "Courses",
-    path: "/admin/courses",
-    icon: <BookOpen size={18} />,
-  },
-  {
-    label: "Assignments",
-    path: "/admin/assignments",
-    icon: <ClipboardList size={18} />,
-  },
-  {
-    label: "Quizzes",
-    path: "/admin/quizzes",
-    icon: <FileQuestion size={18} />,
-  },
-  {
-    label: "Payment",
-    path: "/admin/payment",
-    icon: <CreditCard size={18} />,
-  },
-  {
-    label: "Academic Records",
-    path: "/admin/academicRecords",
-    icon: <BarChart2 size={18} />,
-  },
-  {
-    label: "Settings",
-    path: "/admin/settings",
-    icon: <Settings size={18} />,
-  },
-];
-
 const studentMenu: MenuItem[] = [
+  { label: "Dashboard", path: "/student-dashboard", icon: <Home size={18} /> },
   { label: "Profile", path: "/profile", icon: <User size={18} /> },
   { 
     label: "Courses", 
@@ -80,7 +42,6 @@ const studentMenu: MenuItem[] = [
     badge: "Active"
   },
   { label: "Schedule", path: "/schedule", icon: <CalendarDays size={18} /> },
-  { label: "Quizzes", path: "/quizzes", icon: <FileQuestion size={18} /> },
   {
     label: "Assignments",
     path: "/assignments",
@@ -93,6 +54,78 @@ const studentMenu: MenuItem[] = [
   },
   { label: "Payment", path: "/payment", icon: <CreditCard size={18} /> },
   { label: "Settings", path: "/settings", icon: <Settings size={18} /> },
+];
+
+const adminMenu: MenuItem[] = [
+  { label: "Dashboard", path: "/admin-dashboard", icon: <Home size={18} /> },
+  { label: "Profile", path: "/profile", icon: <User size={18} /> },
+  {
+    label: "Students",
+    path: "/admin/students",
+    icon: <Users size={18} />,
+    badge: "Manage"
+  },
+  {
+    label: "Instructors",
+    path: "/admin/instructors",
+    icon: <UserCheck size={18} />,
+  },
+  {
+    label: "Courses",
+    path: "/admin/courses",
+    icon: <BookOpen size={18} />,
+  },
+  {
+    label: "Groups",
+    path: "/admin/groups",
+    icon: <Users size={18} />,
+  },
+  {
+    label: "Assignments",
+    path: "/admin/assignments",
+    icon: <ClipboardList size={18} />,
+  },
+  {
+    label: "System Reports",
+    path: "/admin/reports",
+    icon: <BarChart2 size={18} />,
+  },
+  {
+    label: "Settings",
+    path: "/admin/settings",
+    icon: <Settings size={18} />,
+  },
+];
+
+const instructorMenu: MenuItem[] = [
+  { label: "Dashboard", path: "/instructor-dashboard", icon: <Home size={18} /> },
+  { label: "Profile", path: "/profile", icon: <User size={18} /> },
+  {
+    label: "My Groups",
+    path: "/instructor/groups",
+    icon: <Users size={18} />,
+    badge: "Teaching"
+  },
+  {
+    label: "Assignments",
+    path: "/instructor/assignments",
+    icon: <ClipboardList size={18} />,
+  },
+  {
+    label: "Grading",
+    path: "/instructor/grading",
+    icon: <BarChart2 size={18} />,
+  },
+  {
+    label: "Schedule",
+    path: "/instructor/schedule",
+    icon: <CalendarDays size={18} />,
+  },
+  {
+    label: "Settings",
+    path: "/instructor/settings",
+    icon: <Settings size={18} />,
+  },
 ];
 
 const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(
@@ -114,7 +147,7 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(
 
     useEffect(() => {
       const expanded: Record<string, boolean> = {};
-      const menu = role === "admin" ? adminMenu : studentMenu;
+      const menu = role === 2 ? adminMenu : role === 3 ? instructorMenu : studentMenu;
 
       menu.forEach((item) => {
         if (item.children && isGroupActive(item)) {
@@ -125,7 +158,8 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(
       setOpenGroups((prev) => ({ ...prev, ...expanded }));
     }, [isGroupActive, location.pathname, role]);
 
-    const menuItems = role === "admin" ? adminMenu : studentMenu;
+    const menuItems = role === 2 ? adminMenu : role === 3 ? instructorMenu : studentMenu;
+    const roleLabels = { 1: "Student", 2: "Admin", 3: "Instructor" };
 
     return (
       <>
@@ -157,7 +191,7 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(
                   <span className="text-xl font-bold bg-gradient-to-r from-edusync-primary to-edusync-accent bg-clip-text text-transparent">
                     EduSync
                   </span>
-                  <p className="text-xs text-gray-500 capitalize">{role} Portal</p>
+                  <p className="text-xs text-gray-500 capitalize">{roleLabels[role]} Portal</p>
                 </div>
               </div>
               <button
