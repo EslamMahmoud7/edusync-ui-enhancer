@@ -8,7 +8,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 
 interface NavbarProps {
   toggleSidebar: () => void;
-  role: "student" | "admin";
+  role: 1 | 2 | 3; // Updated to accept numeric roles
 }
 
 export default function Navbar({ toggleSidebar, role }: NavbarProps) {
@@ -51,6 +51,9 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
   ];
 
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  // Convert numeric role to string for navigation paths
+  const roleString = role === 2 ? "admin" : "student";
 
   return (
     <nav className="sticky top-0 z-40 backdrop-blur-lg bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/50 dark:border-gray-700/50 shadow-soft">
@@ -215,7 +218,7 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
                     <div className="p-3 bg-gray-50/50 dark:bg-gray-700/50 border-t border-gray-200/50 dark:border-gray-600/50">
                       <button
                         onClick={() => {
-                          const path = role === "admin" ? "/admin/notifications" : "/notifications";
+                          const path = roleString === "admin" ? "/admin/notifications" : "/notifications";
                           navigate(path);
                           setShowNotifications(false);
                         }}
