@@ -11,6 +11,7 @@ const Index = () => {
     if (!loading && isAuthenticated && user) {
       // Redirect to appropriate dashboard based on role
       switch (user.role) {
+        case 0: // Legacy student role
         case 1: // Student
           navigate("/student-dashboard", { replace: true });
           break;

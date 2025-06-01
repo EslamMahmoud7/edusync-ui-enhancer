@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
@@ -27,8 +26,9 @@ export default function Layout() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Default to student role if no user or role
-  const role = user?.role || 1;
+  // Default to student role if no user or role, handle legacy role 0
+  const role = user?.role ?? 1;
+  const normalizedRole = role === 0 ? 1 : role;
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-edusync-surface via-white to-edusync-surface/50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900/50">
@@ -39,13 +39,13 @@ export default function Layout() {
       </div>
       
       <div className="relative z-10">
-        <Navbar toggleSidebar={toggleSidebar} role={role} />
+        <Navbar toggleSidebar={toggleSidebar} role={normalizedRole} />
         <div className="flex flex-1 relative">
           <Sidebar
             isOpen={isSidebarOpen}
             onClose={closeSidebar}
             ref={sidebarRef}
-            role={role}
+            role={normalizedRole}
           />
           <main className={`flex-1 p-6 transition-all duration-500 ease-in-out ${
             isSidebarOpen ? 'lg:ml-0' : ''

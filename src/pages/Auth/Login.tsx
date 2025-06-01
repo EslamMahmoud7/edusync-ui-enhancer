@@ -1,4 +1,3 @@
-
 import { useState, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
@@ -61,7 +60,9 @@ const Login: React.FC = () => {
       });
 
       // Navigate based on role
-      switch (data.role) {
+      const userRole = data.role === 0 ? 1 : data.role; // Treat role 0 as student (role 1)
+      
+      switch (userRole) {
         case 1: // Student
           navigate("/student-dashboard");
           break;

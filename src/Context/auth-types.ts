@@ -1,9 +1,8 @@
-
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: 1 | 2 | 3; // 1: Student, 2: Admin, 3: Instructor
+  role: 0 | 1 | 2 | 3; // 0: Student (legacy), 1: Student, 2: Admin, 3: Instructor
   token: string;
 }
 
@@ -13,7 +12,7 @@ export interface UserDTO {
   lastName: string;
   email: string;
   token: string;
-  role: 1 | 2 | 3; // 1: Student, 2: Admin, 3: Instructor
+  role: 0 | 1 | 2 | 3; // 0: Student (legacy), 1: Student, 2: Admin, 3: Instructor
 }
 
 export interface AuthContextType {

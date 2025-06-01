@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -42,27 +41,27 @@ const App = () => (
                     
                     {/* Student routes */}
                     <Route path="student-dashboard" element={
-                      <RoleGuard allowedRoles={[1]}>
+                      <RoleGuard allowedRoles={[0, 1]}>
                         <StudentDashboard />
                       </RoleGuard>
                     } />
                     <Route path="courses" element={
-                      <RoleGuard allowedRoles={[1]}>
+                      <RoleGuard allowedRoles={[0, 1]}>
                         <CoursesPage />
                       </RoleGuard>
                     } />
                     <Route path="assignments" element={
-                      <RoleGuard allowedRoles={[1]}>
+                      <RoleGuard allowedRoles={[0, 1]}>
                         <AssignmentsPage />
                       </RoleGuard>
                     } />
                     <Route path="profile" element={
-                      <RoleGuard allowedRoles={[1, 2, 3]}>
+                      <RoleGuard allowedRoles={[0, 1, 2, 3]}>
                         <Profile />
                       </RoleGuard>
                     } />
                     <Route path="schedule" element={
-                      <RoleGuard allowedRoles={[1]}>
+                      <RoleGuard allowedRoles={[0, 1]}>
                         <SchedulePage />
                       </RoleGuard>
                     } />

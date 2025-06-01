@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, Search, LogOut, Menu, AlertCircle, Moon, Sun, Globe } from "lucide-react";
@@ -52,8 +51,8 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  // Convert numeric role to string for navigation paths
-  const roleString = role === 2 ? "admin" : "student";
+  // Convert numeric role to string for navigation paths, handle legacy role 0
+  const roleString = (role === 2) ? "admin" : "student";
 
   return (
     <nav className="sticky top-0 z-40 backdrop-blur-lg bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/50 dark:border-gray-700/50 shadow-soft">
