@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,6 +20,18 @@ import CoursesPage from "./pages/Student/CoursesPage";
 import AssignmentsPage from "./pages/Student/AssignmentsPage";
 import Profile from "./pages/Student/Profile";
 import SchedulePage from "./pages/Student/SchedulePage";
+import StudentAcademicRecords from "./pages/Student/AcademicRecords";
+import AcademicRecords from "./pages/Admin/AcademicRecords";
+import StudentQuizzes from "./pages/Student/StudentQuizzes";
+import QuizTaking from "./pages/Student/QuizTaking";
+import QuizResult from "./pages/Student/QuizResult";
+import CourseManagement from "./pages/Admin/CourseManagement";
+import GroupManagement from "./pages/Admin/GroupManagement";
+import UserManagement from "./pages/Admin/UserManagement";
+import InstructorQuizzes from "./pages/Instructor/InstructorQuizzes";
+import QuizEditor from "./pages/Instructor/QuizEditor";
+import QuizModels from "./pages/Instructor/QuizModels";
+import QuizAttempts from "./pages/Instructor/QuizAttempts";
 import './i18n/config';
 
 const queryClient = new QueryClient();
