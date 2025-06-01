@@ -1,5 +1,4 @@
-
-import { useState, FormEvent, useEffect } from "react";
+import { useState, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "../../Context/useAuth";
@@ -18,15 +17,7 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
-  const { login, isAuthenticated, loading } = useAuth();
-
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (!loading && isAuthenticated) {
-      console.log('User already authenticated, redirecting...');
-      navigate("/", { replace: true });
-    }
-  }, [isAuthenticated, loading, navigate]);
+  const { login } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -42,8 +33,6 @@ const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      console.log('Login attempt for:', formData.email);
-
       // Client-side validation
       if (!formData.email.includes("@")) {
         throw new Error("Please enter a valid email address");
@@ -58,42 +47,40 @@ const Login: React.FC = () => {
         { Email: formData.email, Password: formData.password }
       );
 
-      console.log('Login response:', data);
-
       // Store user data in localStorage
       localStorage.setItem("eduSyncUser", JSON.stringify(data));
       
       // Update auth context
-      const userObj = {
+      login({
         id: data.id,
         name: `${data.firstName} ${data.lastName}`,
         email: data.email,
         role: data.role,
         token: data.token,
-      };
+      });
 
-      console.log('Calling login with user object:', userObj);
-      login(userObj);
-
-      // Navigate will be handled by the useEffect above
-      console.log('Login successful, navigation will be handled by useEffect');
-
+      // Navigate based on role
+      const userRole = data.role === 0 ? 1 : data.role; // Treat role 0 as student (role 1)
+      
+      switch (userRole) {
+        case 1: // Student
+          navigate("/student-dashboard");
+          break;
+        case 2: // Admin
+          navigate("/admin-dashboard");
+          break;
+        case 3: // Instructor
+          navigate("/instructor-dashboard");
+          break;
+        default:
+          navigate("/student-dashboard"); // Default fallback
+      }
     } catch (err: any) {
-      console.error('Login error:', err);
       setError(err.response?.data?.message || err.message || "Login failed");
     } finally {
       setIsLoading(false);
     }
   };
-
-  // Show loading if auth is still loading
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-edusync-primary"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-edusync-surface via-white to-edusync-surface/50 relative overflow-hidden">

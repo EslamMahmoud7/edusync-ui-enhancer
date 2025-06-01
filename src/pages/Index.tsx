@@ -8,39 +8,26 @@ const Index = () => {
   const { user, isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
-    console.log('Index: Auth state changed', { user: user ? { id: user.id, role: user.role } : null, isAuthenticated, loading });
-    
-    if (!loading) {
-      if (isAuthenticated && user) {
-        console.log('Index: User authenticated, redirecting based on role:', user.role);
-        // Redirect to appropriate dashboard based on role
-        switch (user.role) {
-          case 0: // Legacy student role
-          case 1: // Student
-            console.log('Index: Redirecting to student dashboard');
-            navigate("/student-dashboard", { replace: true });
-            break;
-          case 2: // Admin
-            console.log('Index: Redirecting to admin dashboard');
-            navigate("/admin-dashboard", { replace: true });
-            break;
-          case 3: // Instructor
-            console.log('Index: Redirecting to instructor dashboard');
-            navigate("/instructor-dashboard", { replace: true });
-            break;
-          default:
-            console.log('Index: Unknown role, redirecting to student dashboard');
-            navigate("/student-dashboard", { replace: true }); // Default fallback
-        }
-      } else {
-        console.log('Index: User not authenticated, redirecting to login');
-        navigate("/login", { replace: true });
+    if (!loading && isAuthenticated && user) {
+      // Redirect to appropriate dashboard based on role
+      switch (user.role) {
+        case 0: // Legacy student role
+        case 1: // Student
+          navigate("/student-dashboard", { replace: true });
+          break;
+        case 2: // Admin
+          navigate("/admin-dashboard", { replace: true });
+          break;
+        case 3: // Instructor
+          navigate("/instructor-dashboard", { replace: true });
+          break;
+        default:
+          navigate("/student-dashboard", { replace: true }); // Default fallback
       }
     }
   }, [user, isAuthenticated, loading, navigate]);
 
   if (loading) {
-    console.log('Index: Still loading auth state');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-edusync-primary"></div>
