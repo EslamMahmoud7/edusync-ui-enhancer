@@ -1,11 +1,11 @@
-
 import { useState, useEffect } from "react";
 import { Users, BookOpen, UserCheck, BarChart3, Plus, Settings } from "lucide-react";
 import { useAuth } from "../../Context/useAuth";
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
-interface AdminDashboardData {
+interface AdminDashboardCountsDTO {
   totalStudents: number;
   totalInstructors: number;
   totalCourses: number;
@@ -21,12 +21,14 @@ interface AdminDashboardData {
 export default function AdminDashboard() {
   const { user } = useAuth();
   const { t } = useTranslation();
-  const [dashData, setDashData] = useState<AdminDashboardData | null>(null);
+  const navigate = useNavigate();
+
+  const [dashData, setDashData] = useState<AdminDashboardCountsDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchAdminData() {
+    async function fetchCounts() {
       try {
         const stored = localStorage.getItem("eduSyncUser");
         if (!stored) throw new Error("You are not logged in.");
@@ -35,18 +37,20 @@ export default function AdminDashboard() {
         if (!token) throw new Error("Missing authentication token.");
 
         const headers = { Authorization: `Bearer ${token}` };
-        const response = await api.get<AdminDashboardData>(`/api/AdminDashboard`, { headers });
+        const response = await api.get<AdminDashboardCountsDTO>(
+          "/api/AdminDashboard/counts",
+          { headers }
+        );
         setDashData(response.data);
-
       } catch (err: any) {
-        console.error("Admin dashboard fetch error:", err);
-        setError(err.message || "Failed to load admin dashboard");
+        console.error("Error fetching dashboard counts:", err);
+        setError(err.message || "Failed to load dashboard counts.");
       } finally {
         setLoading(false);
       }
     }
 
-    fetchAdminData();
+    fetchCounts();
   }, []);
 
   if (loading) {
@@ -71,32 +75,32 @@ export default function AdminDashboard() {
   const stats = [
     {
       title: "Total Students",
-      value: dashData?.totalStudents?.toString() || "0",
+      value: dashData?.totalStudents.toString() || "0",
       icon: <Users className="h-6 w-6" />,
       color: "from-blue-500 to-blue-600",
-      change: `+${dashData?.recentEnrollments || 0} this week`
+      change: `+${dashData?.recentEnrollments || 0} this week`,
     },
     {
-      title: "Total Instructors", 
-      value: dashData?.totalInstructors?.toString() || "0",
+      title: "Total Instructors",
+      value: dashData?.totalInstructors.toString() || "0",
       icon: <UserCheck className="h-6 w-6" />,
       color: "from-green-500 to-green-600",
-      change: "Active"
+      change: "Active",
     },
     {
       title: "Total Courses",
-      value: dashData?.totalCourses?.toString() || "0", 
+      value: dashData?.totalCourses.toString() || "0",
       icon: <BookOpen className="h-6 w-6" />,
       color: "from-purple-500 to-purple-600",
-      change: "Available"
+      change: "Available",
     },
     {
       title: "Active Groups",
-      value: dashData?.totalGroups?.toString() || "0",
+      value: dashData?.totalGroups.toString() || "0",
       icon: <BarChart3 className="h-6 w-6" />,
       color: "from-orange-500 to-orange-600",
-      change: "Running"
-    }
+      change: "Running",
+    },
   ];
 
   const quickActions = [
@@ -105,29 +109,37 @@ export default function AdminDashboard() {
       description: "Add, edit, or remove students and instructors",
       icon: <Users className="h-8 w-8" />,
       color: "bg-blue-500",
-      action: () => {/* Navigate to user management */}
+      action: () => {
+        navigate("/admin/users");
+      },
     },
     {
       title: "Manage Courses",
       description: "Create and organize course templates",
       icon: <BookOpen className="h-8 w-8" />,
-      color: "bg-green-500", 
-      action: () => {/* Navigate to course management */}
+      color: "bg-green-500",
+      action: () => {
+        navigate("/admin/courses");
+      },
     },
     {
       title: "Manage Groups",
       description: "Create groups and assign instructors",
       icon: <BarChart3 className="h-8 w-8" />,
       color: "bg-purple-500",
-      action: () => {/* Navigate to group management */}
+      action: () => {
+        navigate("/admin/groups");
+      },
     },
     {
       title: "System Settings",
       description: "Configure system-wide settings",
       icon: <Settings className="h-8 w-8" />,
       color: "bg-orange-500",
-      action: () => {/* Navigate to settings */}
-    }
+      action: () => {
+        navigate("/admin/settings");
+      },
+    },
   ];
 
   return (
@@ -139,7 +151,10 @@ export default function AdminDashboard() {
           <h1 className="text-4xl font-bold mb-4 animate-fade-in">
             Admin Dashboard 👨‍💼
           </h1>
-          <p className="text-xl opacity-90 max-w-2xl animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          <p
+            className="text-xl opacity-90 max-w-2xl animate-fade-in"
+            style={{ animationDelay: "0.2s" }}
+          >
             Manage your educational platform with comprehensive administrative tools
           </p>
         </div>
@@ -157,7 +172,9 @@ export default function AdminDashboard() {
             style={{ animationDelay: `${index * 100}ms` }}
           >
             <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 rounded-xl bg-gradient-to-r ${stat.color} text-white transform transition-transform duration-200 group-hover:scale-110`}>
+              <div
+                className={`p-3 rounded-xl bg-gradient-to-r ${stat.color} text-white transform transition-transform duration-200 group-hover:scale-110`}
+              >
                 {stat.icon}
               </div>
               <span className="text-sm font-medium text-edusync-success">
@@ -190,7 +207,9 @@ export default function AdminDashboard() {
               className="group p-6 bg-gray-50 dark:bg-gray-700/50 hover:bg-gradient-to-r hover:from-edusync-primary/10 hover:to-edusync-accent/10 rounded-xl transition-all duration-200 transform hover:scale-105 animate-fade-in text-left"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className={`w-16 h-16 ${action.color} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200`}>
+              <div
+                className={`w-16 h-16 ${action.color} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200`}
+              >
                 {action.icon}
               </div>
               <h3 className="font-semibold text-gray-800 dark:text-white mb-2">
@@ -238,15 +257,25 @@ export default function AdminDashboard() {
           </h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600 dark:text-gray-400">Database Status</span>
-              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Healthy</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Database Status
+              </span>
+              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                Healthy
+              </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600 dark:text-gray-400">API Response Time</span>
-              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">&lt; 200ms</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                API Response Time
+              </span>
+              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                &lt; 200ms
+              </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600 dark:text-gray-400">Active Sessions</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Active Sessions
+              </span>
               <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
                 {dashData?.systemStats?.activeUsers || 0}
               </span>
