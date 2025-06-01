@@ -31,5 +31,5 @@ export interface InstructorDTO {
   firstName: string;
   lastName: string;
   email: string;
-  phoneNumber: string;
+  phoneNumber: string | null;
 }

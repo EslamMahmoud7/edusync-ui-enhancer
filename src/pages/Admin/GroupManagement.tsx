@@ -1,12 +1,37 @@
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus, Edit, Trash2, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useForm } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { groupService } from '@/services/group';
@@ -17,6 +42,11 @@ import SearchInput from '@/components/SearchInput';
 import { useToast } from '@/hooks/use-toast';
 
 export default function GroupManagement() {
+  // Helper to turn "YYYY-MM-DDTHH:mm" into "YYYY-MM-DDTHH:mm:00"
+  function toFullDateTime(dateTimeLocal: string): string {
+    return `${dateTimeLocal}:00`;
+  }
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<GroupDTO | null>(null);
@@ -28,17 +58,17 @@ export default function GroupManagement() {
 
   const { data: groups = [], isLoading } = useQuery({
     queryKey: ['groups'],
-    queryFn: groupService.getAll
+    queryFn: groupService.getAll,
   });
 
   const { data: courses = [] } = useQuery({
     queryKey: ['courses'],
-    queryFn: courseService.getAll
+    queryFn: courseService.getAll,
   });
 
   const { data: instructors = [] } = useQuery({
     queryKey: ['instructors'],
-    queryFn: userService.getInstructors
+    queryFn: userService.getInstructors,
   });
 
   const createMutation = useMutation({
@@ -50,12 +80,16 @@ export default function GroupManagement() {
       toast({ title: 'Group created successfully' });
     },
     onError: (error: any) => {
-      toast({ title: 'Error creating group', description: error.message, variant: 'destructive' });
-    }
+      toast({
+        title: 'Error creating group',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateGroupDTO }) => 
+    mutationFn: ({ id, data }: { id: string; data: UpdateGroupDTO }) =>
       groupService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['groups'] });
@@ -64,8 +98,12 @@ export default function GroupManagement() {
       toast({ title: 'Group updated successfully' });
     },
     onError: (error: any) => {
-      toast({ title: 'Error updating group', description: error.message, variant: 'destructive' });
-    }
+      toast({
+        title: 'Error updating group',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
   });
 
   const deleteMutation = useMutation({
@@ -75,37 +113,94 @@ export default function GroupManagement() {
       toast({ title: 'Group deleted successfully' });
     },
     onError: (error: any) => {
-      toast({ title: 'Error deleting group', description: error.message, variant: 'destructive' });
-    }
+      toast({
+        title: 'Error deleting group',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
   });
 
-  const filteredGroups = groups.filter(group =>
+  const filteredGroups = groups.filter((group) =>
     group.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
     group.courseTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (group.instructorName && group.instructorName.toLowerCase().includes(searchQuery.toLowerCase()))
+    (
+      group.instructor &&
+      `${group.instructor.firstName} ${group.instructor.lastName}`
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+    )
   );
 
+  // --- Create handler ---
   const handleCreate = (data: CreateGroupDTO) => {
-    createMutation.mutate(data);
+    const fullStart = toFullDateTime(data.startTime);
+    const fullEnd = toFullDateTime(data.endTime);
+
+    const instructorIdOrUndef =
+      data.instructorId === 'none' ? undefined : data.instructorId;
+
+    const payload: CreateGroupDTO = {
+      label: data.label,
+      courseId: data.courseId,
+      instructorId: instructorIdOrUndef,
+      startTime: fullStart,
+      endTime: fullEnd,
+      location: data.location,
+      maxStudents: data.maxStudents,
+    };
+
+    createMutation.mutate(payload);
   };
 
+  // --- Prefill edit form ---
   const handleEdit = (group: GroupDTO) => {
     setEditingGroup(group);
+
+    const existingStart = group.startTime.slice(0, 16); // "YYYY-MM-DDTHH:mm"
+    const existingEnd = group.endTime.slice(0, 16);
+
+    const instructorValue = group.instructor ? group.instructor.id : 'none';
+
     editForm.reset({
       label: group.label,
       courseId: group.courseId,
-      instructorId: group.instructorId || '',
-      startTime: group.startTime,
-      endTime: group.endTime,
+      instructorId: instructorValue,
+      startTime: existingStart,
+      endTime: existingEnd,
       location: group.location,
-      maxStudents: group.maxStudents
+      maxStudents: group.maxStudents,
     });
   };
 
+  // --- Update handler ---
   const handleUpdate = (data: UpdateGroupDTO) => {
-    if (editingGroup) {
-      updateMutation.mutate({ id: editingGroup.id, data });
+    if (!editingGroup) return;
+
+    let fullStart: string | undefined = undefined;
+    let fullEnd: string | undefined = undefined;
+
+    if (data.startTime) {
+      fullStart = toFullDateTime(data.startTime);
     }
+    if (data.endTime) {
+      fullEnd = toFullDateTime(data.endTime);
+    }
+
+    const instructorIdOrNull =
+      data.instructorId === 'none' ? null : data.instructorId;
+
+    const payload: UpdateGroupDTO = {
+      label: data.label,
+      courseId: data.courseId,
+      instructorId: instructorIdOrNull,
+      startTime: fullStart,
+      endTime: fullEnd,
+      location: data.location,
+      maxStudents: data.maxStudents,
+    };
+
+    updateMutation.mutate({ id: editingGroup.id, data: payload });
   };
 
   const handleDelete = (id: string) => {
@@ -115,7 +210,11 @@ export default function GroupManagement() {
   };
 
   if (isLoading) {
-    return <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div></div>;
+    return (
+      <div className="flex justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
   }
 
   return (
@@ -134,7 +233,10 @@ export default function GroupManagement() {
               <DialogTitle>Create New Group</DialogTitle>
             </DialogHeader>
             <Form {...createForm}>
-              <form onSubmit={createForm.handleSubmit(handleCreate)} className="space-y-4">
+              <form
+                onSubmit={createForm.handleSubmit(handleCreate)}
+                className="space-y-4"
+              >
                 <FormField
                   control={createForm.control}
                   name="label"
@@ -178,26 +280,21 @@ export default function GroupManagement() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Instructor (Optional)</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} defaultValue="none">
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select an instructor" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                        <SelectItem value="none">No instructor assigned</SelectItem>  
-                        <SelectContent>
-  <SelectItem value="none">No instructor assigned</SelectItem>
-  {instructors.map((instructor) => (
-    <SelectItem key={instructor.id} value={instructor.id}>
-      {instructor.firstName && instructor.lastName
-        ? `${instructor.firstName} ${instructor.lastName}`
-        : "Unknown Instructor"}
-    </SelectItem>
-  ))}
-</SelectContent>
-
-
+                          <SelectItem value="none">
+                            No instructor assigned
+                          </SelectItem>
+                          {instructors.map((instructor) => (
+                            <SelectItem key={instructor.id} value={instructor.id}>
+                              {instructor.firstName} {instructor.lastName}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -210,9 +307,9 @@ export default function GroupManagement() {
                     name="startTime"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Start Time</FormLabel>
+                        <FormLabel>Start Date &amp; Time</FormLabel>
                         <FormControl>
-                          <Input type="time" {...field} />
+                          <Input type="datetime-local" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -223,9 +320,9 @@ export default function GroupManagement() {
                     name="endTime"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>End Time</FormLabel>
+                        <FormLabel>End Date &amp; Time</FormLabel>
                         <FormControl>
-                          <Input type="time" {...field} />
+                          <Input type="datetime-local" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -252,8 +349,8 @@ export default function GroupManagement() {
                     <FormItem>
                       <FormLabel>Max Students</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
+                        <Input
+                          type="number"
                           placeholder="Enter max students"
                           {...field}
                           onChange={(e) => field.onChange(Number(e.target.value))}
@@ -264,7 +361,11 @@ export default function GroupManagement() {
                   )}
                 />
                 <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsCreateDialogOpen(false)}
+                  >
                     Cancel
                   </Button>
                   <Button type="submit" disabled={createMutation.isPending}>
@@ -301,13 +402,20 @@ export default function GroupManagement() {
               <TableRow key={group.id}>
                 <TableCell className="font-medium">{group.label}</TableCell>
                 <TableCell>{group.courseTitle}</TableCell>
-                <TableCell>{group.instructorName || 'Unassigned'}</TableCell>
-                <TableCell>{group.startTime} - {group.endTime}</TableCell>
+                <TableCell>
+                  {group.instructor
+                    ? `${group.instructor.firstName} ${group.instructor.lastName}`
+                    : 'Unassigned'}
+                </TableCell>
+                <TableCell>
+                  {group.startTime.slice(0, 16).replace('T', ' ')} –{' '}
+                  {group.endTime.slice(0, 16).replace('T', ' ')}
+                </TableCell>
                 <TableCell>{group.location}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
                     <Users className="h-4 w-4" />
-                    {group.enrolledCount}/{group.maxStudents}
+                    {group.numberOfStudents}/{group.maxStudents}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -341,7 +449,10 @@ export default function GroupManagement() {
             <DialogTitle>Edit Group</DialogTitle>
           </DialogHeader>
           <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(handleUpdate)} className="space-y-4">
+            <form
+              onSubmit={editForm.handleSubmit(handleUpdate)}
+              className="space-y-4"
+            >
               <FormField
                 control={editForm.control}
                 name="label"
@@ -385,22 +496,25 @@ export default function GroupManagement() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Instructor (Optional)</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value || 'none'}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select an instructor" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-  <SelectItem value="none">No instructor assigned</SelectItem>
-  {instructors.map((instructor) => (
-    <SelectItem key={instructor.id} value={instructor.id}>
-      {instructor.firstName && instructor.lastName
-        ? `${instructor.firstName} ${instructor.lastName}`
-        : "Unknown Instructor"}
-    </SelectItem>
-  ))}
-</SelectContent>
+                        <SelectItem value="none">
+                          No instructor assigned
+                        </SelectItem>
+                        {instructors.map((instructor) => (
+                          <SelectItem key={instructor.id} value={instructor.id}>
+                            {instructor.firstName} {instructor.lastName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
@@ -412,9 +526,9 @@ export default function GroupManagement() {
                   name="startTime"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Start Time</FormLabel>
+                      <FormLabel>Start Date &amp; Time</FormLabel>
                       <FormControl>
-                        <Input type="time" {...field} />
+                        <Input type="datetime-local" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -425,9 +539,9 @@ export default function GroupManagement() {
                   name="endTime"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>End Time</FormLabel>
+                      <FormLabel>End Date &amp; Time</FormLabel>
                       <FormControl>
-                        <Input type="time" {...field} />
+                        <Input type="datetime-local" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -454,8 +568,8 @@ export default function GroupManagement() {
                   <FormItem>
                     <FormLabel>Max Students</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
+                      <Input
+                        type="number"
                         placeholder="Enter max students"
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
@@ -466,7 +580,11 @@ export default function GroupManagement() {
                 )}
               />
               <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setEditingGroup(null)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditingGroup(null)}
+                >
                   Cancel
                 </Button>
                 <Button type="submit" disabled={updateMutation.isPending}>
