@@ -1,40 +1,43 @@
 
-import api from './api';
-import type { AcademicRecordDTO, CreateAcademicRecordDTO, UpdateAcademicRecordDTO } from '../types/academic';
+import apiClient from './api';
+import type { 
+  AcademicRecordDTO, 
+  UpdateAcademicRecordDTO,
+  UploadAcademicRecordsCsvDTO,
+  BulkAddAcademicRecordsResultDTO 
+} from '../types/academic';
 
 export const academicRecordsService = {
-  // Get all academic records (Admin)
-  getAll: async (): Promise<AcademicRecordDTO[]> => {
-    const response = await api.get('/api/academicrecord');
-    return response.data;
-  },
+getAll: async (): Promise<AcademicRecordDTO[]> => {
+  const response = await apiClient.get('/api/AcademicRecord');
+  return response.data;
+},
 
-  // Get records by group (Instructor)
-  getByGroup: async (groupId: string): Promise<AcademicRecordDTO[]> => {
-    const response = await api.get(`/api/academicrecord/group/${groupId}`);
-    return response.data;
-  },
+getByGroup: async (groupId: string): Promise<AcademicRecordDTO[]> => {
+  const response = await apiClient.get(`/api/academicrecord/group/${groupId}`);
+  return response.data;
+},
 
-  // Get records by student
-  getByStudent: async (studentId: string): Promise<AcademicRecordDTO[]> => {
-    const response = await api.get(`/api/academicrecord/student/${studentId}`);
-    return response.data;
-  },
+getByStudent: async (studentId: string): Promise<AcademicRecordDTO[]> => {
+  const response = await apiClient.get(`/api/academicrecord/student/${studentId}`);
+  return response.data;
+},
 
-  // Create new academic record
-  create: async (data: CreateAcademicRecordDTO): Promise<AcademicRecordDTO> => {
-    const response = await api.post('/api/academicrecord', data);
-    return response.data;
-  },
+addFromCsv: async (formData: FormData): Promise<BulkAddAcademicRecordsResultDTO> => {
+  const response = await apiClient.post('/api/academicrecord/bulk-upload-csv', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+},
 
-  // Update academic record
-  update: async (id: string, data: UpdateAcademicRecordDTO): Promise<AcademicRecordDTO> => {
-    const response = await api.put(`/api/academicrecord/${id}`, data);
-    return response.data;
-  },
+update: async (id: string, data: UpdateAcademicRecordDTO): Promise<AcademicRecordDTO> => {
+  const response = await apiClient.put(`/api/academicrecord/${id}`, data);
+  return response.data;
+},
 
-  // Delete academic record
-  delete: async (id: string): Promise<void> => {
-    await api.delete(`/api/academicrecord/${id}`);
-  }
+delete: async (id: string): Promise<void> => {
+  await apiClient.delete(`/api/academicrecord/${id}`);
+}
 };
