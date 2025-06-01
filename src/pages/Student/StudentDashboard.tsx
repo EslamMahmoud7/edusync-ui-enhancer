@@ -95,7 +95,7 @@ export default function StudentDashboard() {
 
         // 3. Fetch assignments
         const assignmentsResponse = await api.get<AssignmentDTO[]>(
-          `/api/Assignment/mine/${studentId}`,
+          `/api/Assignment/student/${studentId}`,
           { headers }
         );
         setAssignments(assignmentsResponse.data);

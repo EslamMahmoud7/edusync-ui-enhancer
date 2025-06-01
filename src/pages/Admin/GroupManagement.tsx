@@ -185,12 +185,18 @@ export default function GroupManagement() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">No instructor assigned</SelectItem>
-                          {instructors.map((instructor) => (
-                            <SelectItem key={instructor.id} value={instructor.id}>
-                              {instructor.user.firstName} {instructor.user.lastName}
-                            </SelectItem>
-                          ))}
+                        <SelectItem value="none">No instructor assigned</SelectItem>  
+                          <SelectContent>
+  <SelectItem value="">No instructor assigned</SelectItem>
+  {instructors.map((instructor) => (
+    <SelectItem key={instructor.id} value={instructor.id}>
+      {instructor.user
+        ? `${instructor.user.firstName} ${instructor.user.lastName}`
+        : "Unknown Instructor"}
+    </SelectItem>
+  ))}
+</SelectContent>
+
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -385,13 +391,15 @@ export default function GroupManagement() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">No instructor assigned</SelectItem>
-                        {instructors.map((instructor) => (
-                          <SelectItem key={instructor.id} value={instructor.id}>
-                            {instructor.user.firstName} {instructor.user.lastName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
+                      <SelectItem value="none">No instructor assigned</SelectItem>
+  {instructors.map((instructor) => (
+    <SelectItem key={instructor.id} value={instructor.id}>
+      {instructor.user
+        ? `${instructor.user.firstName} ${instructor.user.lastName}`
+        : "Unknown Instructor"}
+    </SelectItem>
+  ))}
+</SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
