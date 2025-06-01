@@ -154,7 +154,7 @@ export default function AdminDashboard() {
           <div
             key={stat.title}
             className="group bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 dark:border-gray-700/50 p-6 hover:shadow-elevation transition-all duration-300 transform hover:-translate-y-1 animate-scale-in"
-            style={{ animationDelay: (index * 100) + 'ms' }}
+            style={{ animationDelay: `${index * 100}ms` }}
           >
             <div className="flex items-center justify-between mb-4">
               <div className={`p-3 rounded-xl bg-gradient-to-r ${stat.color} text-white transform transition-transform duration-200 group-hover:scale-110`}>
@@ -188,7 +188,7 @@ export default function AdminDashboard() {
               key={action.title}
               onClick={action.action}
               className="group p-6 bg-gray-50 dark:bg-gray-700/50 hover:bg-gradient-to-r hover:from-edusync-primary/10 hover:to-edusync-accent/10 rounded-xl transition-all duration-200 transform hover:scale-105 animate-fade-in text-left"
-              style={{ animationDelay: (index * 100) + 'ms' }}
+              style={{ animationDelay: `${index * 100}ms` }}
             >
               <div className={`w-16 h-16 ${action.color} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200`}>
                 {action.icon}
@@ -243,7 +243,7 @@ export default function AdminDashboard() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600 dark:text-gray-400">API Response Time</span>
-              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">< 200ms</span>
+              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">&lt; 200ms</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600 dark:text-gray-400">Active Sessions</span>
