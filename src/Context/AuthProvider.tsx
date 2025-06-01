@@ -10,16 +10,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Check for saved user from localStorage
     const savedUser = localStorage.getItem('eduSyncUser');
+    console.log('AuthProvider: Checking saved user:', savedUser);
+    
     if (savedUser) {
       try {
         const userData: UserDTO = JSON.parse(savedUser);
-        setUser({
+        console.log('AuthProvider: Parsed user data:', userData);
+        
+        const userObj = {
           id: userData.id,
           name: `${userData.firstName} ${userData.lastName}`,
           email: userData.email,
           role: userData.role,
           token: userData.token
-        });
+        };
+        
+        console.log('AuthProvider: Setting user:', userObj);
+        setUser(userObj);
       } catch (error) {
         console.error('Error parsing saved user:', error);
         localStorage.removeItem('eduSyncUser');
@@ -29,11 +36,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = (userData: User) => {
+    console.log('AuthProvider: Login called with:', userData);
     setUser(userData);
     setLoading(false);
   };
 
   const logout = () => {
+    console.log('AuthProvider: Logout called');
     setUser(null);
     localStorage.removeItem('eduSyncUser');
   };
@@ -45,6 +54,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isAuthenticated: !!user,
     loading,
   };
+
+  console.log('AuthProvider: Current auth state:', {
+    user: user ? { id: user.id, role: user.role } : null,
+    isAuthenticated: !!user,
+    loading
+  });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
