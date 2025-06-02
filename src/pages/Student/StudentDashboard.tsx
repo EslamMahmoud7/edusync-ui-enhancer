@@ -67,7 +67,7 @@ export default function StudentDashboard() {
         if (!stored) throw new Error("You are not logged in.");
 
         const { id: studentId, token } = JSON.parse(stored);
-        if (!studentId || !token) throw new Error("Missing user ID or token.");
+        if (!studentId) throw new Error("Missing user ID or token.");
 
         const headers = { Authorization: `Bearer ${token}` };
 

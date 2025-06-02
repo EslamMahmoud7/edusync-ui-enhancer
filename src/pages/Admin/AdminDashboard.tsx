@@ -34,7 +34,6 @@ export default function AdminDashboard() {
         if (!stored) throw new Error("You are not logged in.");
 
         const { token } = JSON.parse(stored);
-        if (!token) throw new Error("Missing authentication token.");
 
         const headers = { Authorization: `Bearer ${token}` };
         const response = await api.get<AdminDashboardCountsDTO>(

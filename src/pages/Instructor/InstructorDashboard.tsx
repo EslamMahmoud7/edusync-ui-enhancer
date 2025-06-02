@@ -26,7 +26,7 @@ export default function InstructorDashboard() {
         if (!stored) throw new Error("You are not logged in.");
 
         const { id: instructorId, token } = JSON.parse(stored);
-        if (!instructorId || !token) throw new Error("Missing user ID or token.");
+
 
         const headers = { Authorization: `Bearer ${token}` };
         const response = await api.get<InstructorDashboardCountsDTO>(
