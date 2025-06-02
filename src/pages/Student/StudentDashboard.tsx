@@ -43,9 +43,7 @@ export default function StudentDashboard() {
   const { isRTL } = useLanguage();
 
   const [activeCard, setActiveCard] = useState<number | null>(null);
-  const [dashData, setDashData] = useState<StudentDashboardData | null>(
-    null
-  );
+  const [dashData, setDashData] = useState<StudentDashboardData | null>(null);
   const [courses, setCourses] = useState<CourseDto[]>([]);
   const [assignments, setAssignments] = useState<AssignmentDTO[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,44 +54,49 @@ export default function StudentDashboard() {
     message: string;
     date: string;
   } | null>(null);
-  const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(
-    false
-  );
+  const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
       try {
+<<<<<<< Updated upstream
         const stored = localStorage.getItem("eduSyncUser");
         if (!stored) throw new Error("You are not logged in.");
 
         const { id: studentId, token } = JSON.parse(stored);
         if (!studentId) throw new Error("Missing user ID or token.");
+=======
+        // 1. Make sure `user` is loaded from context
+        if (!user || !user.id || !user.token) {
+          throw new Error("User is not logged in or missing credentials.");
+        }
+>>>>>>> Stashed changes
 
+        const studentId = user.id;
+        const token = user.token;
         const headers = { Authorization: `Bearer ${token}` };
 
-        // 1. Fetch dashboard data
+        // 2. Fetch dashboard data
         const dashResponse = await api.get<StudentDashboardData>(
           `/api/dashboard/${studentId}`,
           { headers }
         );
-
         const dataFromServer = dashResponse.data;
 
         // Normalize announcements → always be an array
         if (!Array.isArray(dataFromServer.announcements)) {
           dataFromServer.announcements = [];
         }
-
         setDashData(dataFromServer);
 
-        // 2. Fetch courses via groups
+        // 3. Fetch courses via groups
         const coursesResponse = await api.get<CourseDto[]>(
           `/api/Course/my-courses-via-groups/${studentId}`,
           { headers }
         );
         setCourses(coursesResponse.data);
 
-        // 3. Fetch assignments
+        // 4. Fetch assignments
         const assignmentsResponse = await api.get<AssignmentDTO[]>(
           `/api/Assignment/student/${studentId}`,
           { headers }
@@ -108,7 +111,7 @@ export default function StudentDashboard() {
     }
 
     fetchData();
-  }, []);
+  }, [user]); // re-run if `user` changes
 
   const handleAnnouncementClick = (announcement: {
     title: string;
@@ -318,7 +321,7 @@ export default function StudentDashboard() {
             {t("dashboard.announcements")}
           </h2>
           <div className="space-y-4 max-h-80 overflow-y-auto">
-            {((dashData.announcements?.length ?? 0) > 0) ? (
+            {dashData.announcements.length > 0 ? (
               dashData.announcements.map((announcement, idx) => (
                 <div
                   key={idx} // using index as key since there is no `id`
