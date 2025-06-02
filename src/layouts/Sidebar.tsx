@@ -51,8 +51,6 @@ const studentMenu: MenuItem[] = [
     path: "/academicRecords",
     icon: <BarChart2 size={18} />,
   },
-  { label: "Payment", path: "/payment", icon: <CreditCard size={18} /> },
-  { label: "Settings", path: "/settings", icon: <Settings size={18} /> },
 ];
 
 const adminMenu: MenuItem[] = [
@@ -77,11 +75,6 @@ const adminMenu: MenuItem[] = [
     label: "User Management",
     path: "/admin/users",
     icon: <UserCheck size={18} />,
-  },
-  {
-    label: "Settings",
-    path: "/admin/settings",
-    icon: <Settings size={18} />,
   },
 ];
 
@@ -108,11 +101,6 @@ const instructorMenu: MenuItem[] = [
     label: "Schedule",
     path: "/instructor/schedule",
     icon: <CalendarDays size={18} />,
-  },
-  {
-    label: "Settings",
-    path: "/instructor/settings",
-    icon: <Settings size={18} />,
   },
 ];
 
