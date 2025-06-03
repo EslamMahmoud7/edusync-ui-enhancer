@@ -7,7 +7,7 @@ export interface AssignmentDTO {
   description: string;
   dueDate: string;
   status: number;
-  groupId: string;
+  gzroupId: string;
   groupLabel: string;
   courseTitle: string;
 }

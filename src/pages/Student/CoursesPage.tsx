@@ -1,21 +1,38 @@
-
 import { useState, useEffect } from "react";
-import { BookOpen, Users, Award, ExternalLink, Calendar, MapPin } from "lucide-react";
+import { BookOpen, ExternalLink, Calendar, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import MaterialsModal from "../../components/MaterialsModal";
 import api from "../../services/api";
 
+// Interface for what the frontend component expects for display and interaction
 interface GroupWithCourse {
-  id: string;
-  label: string;
-  courseId: string;
+  id: string; // Unique ID for this specific group/session
+  label: string; // Display label for the group
+  courseId: string; // Unique ID for the underlying course
   courseTitle: string;
   courseDescription: string;
   courseCredits: number;
   courseLevel: number;
-  startTime: string;
+  startTime: string; // ISO date string for the group's session time
   location: string;
+}
+
+// Interface for the actual data items returned by the API
+interface ApiScheduleItemGroup {
+  groupId: string;
+  date: string; // This is the startTime
+  day: string; // Informational, can be derived
+  time: string; // Informational, can be derived
+  subject: string; // This is the courseTitle
+  room: string; // This is the location
+  doctor?: string; // Instructor's name, optional
+  // --- The following fields are assumed to be MISSING from this API endpoint
+  // --- and are needed for GroupWithCourse. We will use defaults.
+  // actualCourseId?: string;
+  // courseDescriptionText?: string;
+  // courseCreditPoints?: number;
+  // courseDifficultyLevel?: number;
 }
 
 export default function CoursesPage() {
@@ -33,6 +50,8 @@ export default function CoursesPage() {
   }, []);
 
   const fetchCourses = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const stored = localStorage.getItem("eduSyncUser");
       if (!stored) throw new Error("You are not logged in.");
@@ -40,28 +59,74 @@ export default function CoursesPage() {
       const { id: studentId, token } = JSON.parse(stored);
       const headers = { Authorization: `Bearer ${token}` };
 
-      const response = await api.get<GroupWithCourse[]>(
-        `/api/CourseSchedule/student/${studentId}`,
+      // Fetch data using the new API structure
+      const response = await api.get<ApiScheduleItemGroup[]>(
+        `/api/CourseSchedule/student/${studentId}`, // Assuming this is still the correct endpoint
         { headers }
       );
-      setGroups(response.data);
+
+      console.log("Raw API response for CoursesPage:", JSON.stringify(response.data, null, 2));
+
+      // Transform the API data to match GroupWithCourse interface
+      const transformedGroups: GroupWithCourse[] = response.data.map((item, index) => {
+        // --- CRITICAL: Provide sensible defaults for missing course-specific data ---
+        // The BEST solution is for the API to return these.
+        const a_courseId = `COURSE_ID_FOR_${item.subject.replace(/\s+/g, '_')}_${index}`; // Placeholder
+        const a_courseDescription = `Detailed description for ${item.subject}.`; // Placeholder
+        const a_courseCredits = 3; // Default placeholder
+        const a_courseLevel = 1; // Default placeholder
+
+        return {
+          id: item.groupId, // Use groupId from API as the unique ID for this group/session
+          label: `${item.subject} Group (${item.day} at ${item.time})`, // Create a descriptive label
+          
+          // --- Course Specific Details ---
+          courseId: a_courseId, // Using placeholder
+          courseTitle: item.subject,
+          courseDescription: a_courseDescription, // Using placeholder
+          courseCredits: a_courseCredits, // Using placeholder
+          courseLevel: a_courseLevel, // Using placeholder
+          
+          // --- Group/Session Specific Details ---
+          startTime: item.date, // API 'date' field is the start time
+          location: item.room || "N/A",
+        };
+      });
+      
+      setGroups(transformedGroups);
+
     } catch (err: any) {
       console.error("Courses fetch error:", err);
-      setError(err.message || "Failed to load courses");
+      let errorMessage = "Failed to load courses. Please try again later.";
+      if (err.response && err.response.data && err.response.data.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   const handleViewResources = (groupId: string, courseTitle: string) => {
+    // Note: The 'groupId' here is the specific session's ID (from apiItem.groupId)
+    // If MaterialsModal needs a general course ID, you might need to pass group.courseId
     setSelectedMaterialGroup({ groupId, courseTitle });
     setIsMaterialsModalOpen(true);
   };
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+        return {
+            date: "Date N/A",
+            time: "Time N/A",
+            day: "Day N/A"
+        };
+    }
     return {
-      date: date.toLocaleDateString(),
+      date: date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }),
       time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       day: date.toLocaleDateString('en-US', { weekday: 'long' })
     };
@@ -77,10 +142,11 @@ export default function CoursesPage() {
 
   if (error) {
     return (
-      <div className="space-y-8">
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 text-red-600 dark:text-red-400">
-          <h2 className="text-xl font-semibold mb-2">Error Loading Courses</h2>
+      <div className="space-y-8 p-4 md:p-8">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 text-red-600 dark:text-red-400 text-center">
+          <h2 className="text-xl font-semibold mb-2">⚠️ Error Loading Courses</h2>
           <p>{error}</p>
+          <Button onClick={fetchCourses} className="mt-4">Try Again</Button>
         </div>
       </div>
     );
@@ -93,13 +159,13 @@ export default function CoursesPage() {
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10">
           <h1 className="text-4xl font-bold mb-4 animate-fade-in">
-            My Courses 📚
+            My Enrolled Sessions 📚
           </h1>
           <p
             className="text-xl opacity-90 max-w-2xl animate-fade-in"
             style={{ animationDelay: "0.2s" }}
           >
-            Explore your enrolled courses and access study materials
+            Explore your enrolled course sessions and access study materials
           </p>
         </div>
         <div className="absolute top-0 right-0 translate-x-12 -translate-y-12">
@@ -113,15 +179,14 @@ export default function CoursesPage() {
           const dateInfo = formatDate(group.startTime);
           return (
             <div
-              key={group.id}
+              key={group.id} 
               className="group bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 dark:border-gray-700/50 p-6 hover:shadow-elevation transition-all duration-300 transform hover:-translate-y-1 animate-scale-in"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              {/* Course Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <h3 className="font-bold text-lg text-gray-800 dark:text-white group-hover:text-edusync-primary transition-colors duration-200">
-                    {group.courseTitle}
+                    {group.courseTitle} 
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                     {group.label}
@@ -129,22 +194,20 @@ export default function CoursesPage() {
                 </div>
                 <div className="flex flex-col gap-1">
                   <Badge variant="secondary">
-                    Level {group.courseLevel}
+                    Level {group.courseLevel} {/* This will show the default value */}
                   </Badge>
                   <Badge variant="outline">
-                    {group.courseCredits} Credits
+                    {group.courseCredits} Credits {/* This will show the default value */}
                   </Badge>
                 </div>
               </div>
 
-              {/* Course Description */}
               {group.courseDescription && (
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
-                  {group.courseDescription}
+                  {group.courseDescription} {/* This will show the default value */}
                 </p>
               )}
 
-              {/* Course Details */}
               <div className="space-y-2 mb-4">
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                   <Calendar className="h-4 w-4" />
@@ -152,11 +215,10 @@ export default function CoursesPage() {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                   <MapPin className="h-4 w-4" />
-                  {group.location || 'Location TBA'}
+                  {group.location}
                 </div>
               </div>
 
-              {/* Action Button */}
               <Button
                 onClick={() => handleViewResources(group.id, group.courseTitle)}
                 className="w-full bg-edusync-primary hover:bg-edusync-secondary transition-colors duration-200"
@@ -169,27 +231,25 @@ export default function CoursesPage() {
         })}
       </div>
 
-      {/* Empty State */}
-      {groups.length === 0 && (
+      {!loading && groups.length === 0 && !error && (
         <div className="text-center py-12">
           <div className="w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
             <BookOpen className="w-12 h-12 text-gray-400" />
           </div>
           <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
-            No Courses Enrolled
+            No Course Sessions Found
           </h3>
           <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-            You haven't enrolled in any courses yet. Contact your academic advisor to get started.
+            You do not seem to be enrolled in any specific course sessions at the moment.
           </p>
         </div>
       )}
 
-      {/* Materials Modal */}
       {selectedMaterialGroup && (
         <MaterialsModal
           isOpen={isMaterialsModalOpen}
           onClose={() => setIsMaterialsModalOpen(false)}
-          groupId={selectedMaterialGroup.groupId}
+          groupId={selectedMaterialGroup.groupId} // This is the group/session ID
           courseTitle={selectedMaterialGroup.courseTitle}
         />
       )}

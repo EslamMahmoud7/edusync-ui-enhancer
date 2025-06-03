@@ -25,7 +25,7 @@ const fetchAssignments = async (): Promise<Assignment[]> => {
       dueDate: string;
       courseTitle: string;
     }>
-  >(`/api/assignment/mine/${studentId}`, {
+  >(`/api/assignment/student/${studentId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
