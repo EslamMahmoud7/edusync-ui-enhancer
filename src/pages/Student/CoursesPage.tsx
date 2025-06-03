@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Search, Calendar, User, ExternalLink, Clock } from "lucide-react";
 import api from "../../services/api";
 import type { CourseDto } from "../../Context/auth-types";
+import MaterialsModal from "../../components/MaterialsModal";
 
 const fetchMyCourses = async (): Promise<CourseDto[]> => {
   try {
@@ -29,6 +29,11 @@ export default function CoursesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [selectedMaterialGroup, setSelectedMaterialGroup] = useState<{
+    groupId: string;
+    courseTitle: string;
+  } | null>(null);
+  const [isMaterialsModalOpen, setIsMaterialsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchMyCourses()
@@ -37,6 +42,11 @@ export default function CoursesPage() {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  const handleViewResources = (groupId: string, courseTitle: string) => {
+    setSelectedMaterialGroup({ groupId, courseTitle });
+    setIsMaterialsModalOpen(true);
+  };
 
   if (loading) {
     return (
@@ -175,18 +185,27 @@ export default function CoursesPage() {
               </span>
             </div>
 
-            {/* Resource Link */}
-            {course.resourceLink && (
-              <a
-                href={course.resourceLink}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-edusync-primary to-edusync-secondary text-white rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+            {/* Actions */}
+            <div className="flex gap-2">
+              {course.resourceLink && (
+                <a
+                  href={course.resourceLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-center gap-2 flex-1 py-3 bg-gradient-to-r from-edusync-primary to-edusync-secondary text-white rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span className="font-medium">Course Resources</span>
+                </a>
+              )}
+              <button
+                onClick={() => handleViewResources(course.groupId, course.title)}
+                className="flex items-center justify-center gap-2 flex-1 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
               >
                 <ExternalLink className="w-4 h-4" />
-                <span className="font-medium">Course Resources</span>
-              </a>
-            )}
+                <span className="font-medium">Materials</span>
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -198,6 +217,16 @@ export default function CoursesPage() {
           </div>
           <p className="text-gray-600">No courses found matching "{searchTerm}"</p>
         </div>
+      )}
+
+      {/* Materials Modal */}
+      {selectedMaterialGroup && (
+        <MaterialsModal
+          isOpen={isMaterialsModalOpen}
+          onClose={() => setIsMaterialsModalOpen(false)}
+          groupId={selectedMaterialGroup.groupId}
+          courseTitle={selectedMaterialGroup.courseTitle}
+        />
       )}
     </div>
   );

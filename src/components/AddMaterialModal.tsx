@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { materialService, CreateMaterialDTO } from '../services/material';
-import { useAuth } from '../Context/useAuth';
 
 interface AddMaterialModalProps {
   isOpen: boolean;
@@ -16,28 +15,30 @@ interface AddMaterialModalProps {
 }
 
 export default function AddMaterialModal({ isOpen, onClose, groupId, onMaterialAdded }: AddMaterialModalProps) {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     fileUrl: '',
-    type: 0
+    type: 0, // 0: Document, 1: Video, 2: Other
   });
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user?.id) return;
-
     setLoading(true);
+
     try {
-      const materialData: CreateMaterialDTO = {
+      const stored = localStorage.getItem("eduSyncUser");
+      if (!stored) throw new Error("Not logged in");
+      const { id: instructorId } = JSON.parse(stored);
+
+      const createData: CreateMaterialDTO = {
         ...formData,
         groupId,
-        uploadingInstructorId: user.id
+        uploadingInstructorId: instructorId,
       };
-      
-      await materialService.create(materialData);
+
+      await materialService.create(createData);
       onMaterialAdded();
       onClose();
       setFormData({ title: '', description: '', fileUrl: '', type: 0 });
@@ -48,24 +49,19 @@ export default function AddMaterialModal({ isOpen, onClose, groupId, onMaterialA
     }
   };
 
-  const handleInputChange = (field: string, value: string | number) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Course Material</DialogTitle>
+          <DialogTitle>Add New Material</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Title *</label>
+            <label className="block text-sm font-medium mb-1">Title</label>
             <Input
               value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
-              placeholder="Enter material title"
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               required
             />
           </div>
@@ -74,37 +70,39 @@ export default function AddMaterialModal({ isOpen, onClose, groupId, onMaterialA
             <label className="block text-sm font-medium mb-1">Description</label>
             <Textarea
               value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Enter material description"
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">File URL *</label>
+            <label className="block text-sm font-medium mb-1">File URL</label>
             <Input
+              type="url"
               value={formData.fileUrl}
-              onChange={(e) => handleInputChange('fileUrl', e.target.value)}
-              placeholder="https://example.com/file.pdf"
+              onChange={(e) => setFormData({ ...formData, fileUrl: e.target.value })}
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Type *</label>
-            <Select value={formData.type.toString()} onValueChange={(value) => handleInputChange('type', parseInt(value))}>
+            <label className="block text-sm font-medium mb-1">Type</label>
+            <Select
+              value={formData.type.toString()}
+              onValueChange={(value) => setFormData({ ...formData, type: parseInt(value) })}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0">Document/PDF</SelectItem>
+                <SelectItem value="0">Document</SelectItem>
                 <SelectItem value="1">Video</SelectItem>
                 <SelectItem value="2">Other</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div className="flex gap-2 pt-4">
+          <div className="flex gap-2">
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Cancel
             </Button>

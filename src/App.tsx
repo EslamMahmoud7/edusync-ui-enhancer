@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -33,6 +32,7 @@ import QuizEditor from "./pages/Instructor/QuizEditor";
 import QuizModels from "./pages/Instructor/QuizModels";
 import QuizAttempts from "./pages/Instructor/QuizAttempts";
 import InstructorGroups from "./pages/Instructor/InstructorGroups";
+import InstructorAssignments from "./pages/Instructor/InstructorAssignments";
 import './i18n/config';
 
 const queryClient = new QueryClient();
@@ -116,6 +116,16 @@ const App = () => (
                     <Route path="instructor-dashboard" element={
                       <RoleGuard allowedRoles={[3]}>
                         <InstructorDashboard />
+                      </RoleGuard>
+                    } />
+                    <Route path="instructor/groups" element={
+                      <RoleGuard allowedRoles={[3]}>
+                        <InstructorGroups />
+                      </RoleGuard>
+                    } />
+                    <Route path="instructor/assignments" element={
+                      <RoleGuard allowedRoles={[3]}>
+                        <InstructorAssignments />
                       </RoleGuard>
                     } />
                   </Route>
