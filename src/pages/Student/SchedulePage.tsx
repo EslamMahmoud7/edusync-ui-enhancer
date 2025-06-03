@@ -52,7 +52,7 @@ export default function SchedulePage() {
         if (!studentId) throw new Error("Missing user ID or token.");
 
         const { data } = await api.get<ScheduleDTO[]>(
-          `/api/courseschedule/mine/${studentId}`,
+          `/api/courseschedule/student/${studentId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 

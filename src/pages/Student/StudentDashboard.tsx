@@ -99,7 +99,7 @@ export default function StudentDashboard() {
 
         // 2. Fetch groups (for courses and materials)
         const groupsResponse = await api.get<GroupWithCourse[]>(
-          `/api/group/student/${studentId}`,
+          `/api/CourseSchedule/student/${studentId}`,
           { headers }
         );
         setGroups(groupsResponse.data);
