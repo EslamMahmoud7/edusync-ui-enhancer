@@ -32,6 +32,7 @@ import InstructorQuizzes from "./pages/Instructor/InstructorQuizzes";
 import QuizEditor from "./pages/Instructor/QuizEditor";
 import QuizModels from "./pages/Instructor/QuizModels";
 import QuizAttempts from "./pages/Instructor/QuizAttempts";
+import InstructorGroups from "./pages/Instructor/InstructorGroups";
 import './i18n/config';
 
 const queryClient = new QueryClient();

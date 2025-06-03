@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import {
   BookOpen,
@@ -7,18 +8,20 @@ import {
   Award,
   Calendar,
   Users,
+  ExternalLink,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../Context/useAuth";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "../../contexts/LanguageContext";
 import AnnouncementModal from "../../components/AnnouncementModal";
+import MaterialsModal from "../../components/MaterialsModal";
 import api from "../../services/api";
-import type { CourseDto, AssignmentDTO } from "../../Context/auth-types";
+import type { AssignmentDTO } from "../../Context/auth-types";
 
 interface StudentDashboardData {
   fullName: string;
-  totalCourses: number; // ← renamed from totalGroups
+  totalCourses: number;
   gpa: number;
   pendingAssignments: number;
   todaysClasses: Array<{
@@ -26,14 +29,22 @@ interface StudentDashboardData {
     subject: string;
     location: string;
   }>;
-  // we never actually use upcomingAssignments in this component, but it exists on the API:
   upcomingAssignments: Array<unknown>;
   announcements: Array<{
-    // no `id` field in the API response
     title: string;
-    message: string; // ← renamed from content
+    message: string;
     date: string;
   }>;
+}
+
+interface GroupWithCourse {
+  id: string;
+  label: string;
+  courseId: string;
+  courseTitle: string;
+  courseDescription: string;
+  courseCredits: number;
+  courseLevel: number;
 }
 
 export default function StudentDashboard() {
@@ -43,10 +54,8 @@ export default function StudentDashboard() {
   const { isRTL } = useLanguage();
 
   const [activeCard, setActiveCard] = useState<number | null>(null);
-  const [dashData, setDashData] = useState<StudentDashboardData | null>(
-    null
-  );
-  const [courses, setCourses] = useState<CourseDto[]>([]);
+  const [dashData, setDashData] = useState<StudentDashboardData | null>(null);
+  const [groups, setGroups] = useState<GroupWithCourse[]>([]);
   const [assignments, setAssignments] = useState<AssignmentDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,9 +65,12 @@ export default function StudentDashboard() {
     message: string;
     date: string;
   } | null>(null);
-  const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(
-    false
-  );
+  const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
+  const [selectedMaterialGroup, setSelectedMaterialGroup] = useState<{
+    groupId: string;
+    courseTitle: string;
+  } | null>(null);
+  const [isMaterialsModalOpen, setIsMaterialsModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -79,19 +91,18 @@ export default function StudentDashboard() {
 
         const dataFromServer = dashResponse.data;
 
-        // Normalize announcements → always be an array
         if (!Array.isArray(dataFromServer.announcements)) {
           dataFromServer.announcements = [];
         }
 
         setDashData(dataFromServer);
 
-        // 2. Fetch courses via groups
-        const coursesResponse = await api.get<CourseDto[]>(
-          `/api/Course/my-courses-via-groups/${studentId}`,
+        // 2. Fetch groups (for courses and materials)
+        const groupsResponse = await api.get<GroupWithCourse[]>(
+          `/api/group/student/${studentId}`,
           { headers }
         );
-        setCourses(coursesResponse.data);
+        setGroups(groupsResponse.data);
 
         // 3. Fetch assignments
         const assignmentsResponse = await api.get<AssignmentDTO[]>(
@@ -119,7 +130,12 @@ export default function StudentDashboard() {
     setIsAnnouncementModalOpen(true);
   };
 
-  // Only build stats once dashData is defined. Using totalCourses instead of totalGroups:
+  const handleViewResources = (groupId: string, courseTitle: string) => {
+    setSelectedMaterialGroup({ groupId, courseTitle });
+    setIsMaterialsModalOpen(true);
+  };
+
+  // Only build stats once dashData is defined
   const stats = dashData
     ? [
         {
@@ -177,7 +193,6 @@ export default function StudentDashboard() {
     );
   }
 
-  // If dashData somehow is still null, bail out with a message
   if (!dashData) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -259,55 +274,49 @@ export default function StudentDashboard() {
 
       {/* Quick Actions and Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Quick Actions */}
+        {/* My Courses with Resources */}
         <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 dark:border-gray-700/50 p-6 animate-fade-in">
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-3">
-            <Award className="h-6 w-6 text-edusync-primary" />
-            {t("Quick Actions")}
+            <BookOpen className="h-6 w-6 text-edusync-primary" />
+            My Courses
           </h2>
-          <div className="grid grid-cols-2 gap-4">
-            {[
-              {
-                label: t("View Courses"),
-                icon: BookOpen,
-                path: "/courses",
-                color: "bg-blue-500",
-              },
-              {
-                label: t("Check Assignments"),
-                icon: FileText,
-                path: "/assignments",
-                color: "bg-orange-500",
-              },
-              {
-                label: t("View Schedule"),
-                icon: Clock3,
-                path: "/schedule",
-                color: "bg-green-500",
-              },
-              {
-                label: t("Update Profile"),
-                icon: Users,
-                path: "/profile",
-                color: "bg-purple-500",
-              },
-            ].map((action, index) => (
-              <button
-                key={action.label}
-                onClick={() => navigate(action.path)}
-                className="group p-4 bg-gray-50 dark:bg-gray-700/50 hover:bg-gradient-to-r hover:from-edusync-primary/10 hover:to-edusync-accent/10 rounded-xl transition-all duration-200 transform hover:scale-105 animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
+          <div className="space-y-4 max-h-80 overflow-y-auto">
+            {groups.length > 0 ? (
+              groups.map((group, index) => (
                 <div
-                  className={`w-12 h-12 ${action.color} rounded-lg flex items-center justify-center mb-3 mx-auto group-hover:scale-110 transition-transform duration-200`}
+                  key={group.id}
+                  className="group p-4 bg-gradient-to-r from-edusync-primary/5 to-edusync-accent/5 hover:from-edusync-primary/10 hover:to-edusync-accent/10 rounded-xl border border-edusync-primary/20 transition-all duration-200 animate-fade-in"
+                  style={{ animationDelay: `${index * 100}ms` }}
                 >
-                  <action.icon className="h-6 w-6 text-white" />
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-800 dark:text-white group-hover:text-edusync-primary transition-colors duration-200">
+                        {group.courseTitle}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        {group.label} • Level {group.courseLevel} • {group.courseCredits} Credits
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleViewResources(group.id, group.courseTitle)}
+                      className="ml-3 px-3 py-1 text-xs bg-edusync-primary text-white rounded-lg hover:bg-edusync-secondary transition-colors duration-200"
+                    >
+                      <ExternalLink className="h-3 w-3 inline mr-1" />
+                      Resources
+                    </button>
+                  </div>
                 </div>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 text-center">
-                  {action.label}
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <BookOpen className="w-8 h-8 text-gray-400" />
+                </div>
+                <p className="text-gray-600 dark:text-gray-400">
+                  No courses enrolled yet
                 </p>
-              </button>
-            ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -321,7 +330,7 @@ export default function StudentDashboard() {
             {((dashData.announcements?.length ?? 0) > 0) ? (
               dashData.announcements.map((announcement, idx) => (
                 <div
-                  key={idx} // using index as key since there is no `id`
+                  key={idx}
                   className="group p-4 bg-gradient-to-r from-edusync-primary/5 to-edusync-accent/5 hover:from-edusync-primary/10 hover:to-edusync-accent/10 rounded-xl border border-edusync-primary/20 transition-all duration-200 cursor-pointer animate-fade-in"
                   style={{ animationDelay: `${idx * 100}ms` }}
                   onClick={() => handleAnnouncementClick(announcement)}
@@ -364,6 +373,16 @@ export default function StudentDashboard() {
           isOpen={isAnnouncementModalOpen}
           onClose={() => setIsAnnouncementModalOpen(false)}
           announcement={selectedAnnouncement}
+        />
+      )}
+
+      {/* Materials Modal */}
+      {selectedMaterialGroup && (
+        <MaterialsModal
+          isOpen={isMaterialsModalOpen}
+          onClose={() => setIsMaterialsModalOpen(false)}
+          groupId={selectedMaterialGroup.groupId}
+          courseTitle={selectedMaterialGroup.courseTitle}
         />
       )}
     </div>
