@@ -1,14 +1,14 @@
 
 import { useState, useEffect } from 'react';
-import { Calendar, Grid, Plus, Users, Clock, MapPin, ExternalLink } from 'lucide-react';
+import { Calendar, Users, BookOpen, Plus, Eye, Clock, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import MaterialsModal from '../../components/MaterialsModal';
 import AddMaterialModal from '../../components/AddMaterialModal';
-import { groupService } from '../../services/group';
 import api from '../../services/api';
 
-interface GroupDTO {
+interface InstructorGroupDTO {
   id: string;
   label: string;
   courseId: string;
@@ -17,15 +17,13 @@ interface GroupDTO {
   courseCredits: number;
   courseLevel: number;
   instructorId: string;
-  startTime: string;
-  endTime: string;
-  location: string;
-  maxStudents: number;
   enrolledStudentsCount: number;
+  startTime: string;
+  location: string;
 }
 
-interface CourseScheduleDTO {
-  date: Date;
+interface ScheduleItem {
+  date: string;
   day: string;
   time: string;
   subject: string;
@@ -34,8 +32,8 @@ interface CourseScheduleDTO {
 }
 
 export default function InstructorGroups() {
-  const [groups, setGroups] = useState<GroupDTO[]>([]);
-  const [schedule, setSchedule] = useState<CourseScheduleDTO[]>([]);
+  const [groups, setGroups] = useState<InstructorGroupDTO[]>([]);
+  const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMaterialGroup, setSelectedMaterialGroup] = useState<{
     groupId: string;
@@ -43,7 +41,6 @@ export default function InstructorGroups() {
   } | null>(null);
   const [isMaterialsModalOpen, setIsMaterialsModalOpen] = useState(false);
   const [isAddMaterialModalOpen, setIsAddMaterialModalOpen] = useState(false);
-  const [selectedGroupForAdd, setSelectedGroupForAdd] = useState<string>('');
 
   useEffect(() => {
     fetchData();
@@ -53,20 +50,30 @@ export default function InstructorGroups() {
     try {
       const stored = localStorage.getItem("eduSyncUser");
       if (!stored) throw new Error("Not logged in");
-      
       const { id: instructorId, token } = JSON.parse(stored);
+
       const headers = { Authorization: `Bearer ${token}` };
-
-      // Fetch instructor groups
-      const groupsData = await groupService.getByInstructor(instructorId);
-      setGroups(groupsData);
-
-      // Fetch instructor schedule
-      const scheduleResponse = await api.get<CourseScheduleDTO[]>(
-        `/api/CourseSchedule/instructor/${instructorId}`,
-        { headers }
-      );
+      
+      // Fetch schedule data
+      const scheduleResponse = await api.get(`/api/CourseSchedule/instructor/${instructorId}`, { headers });
       setSchedule(scheduleResponse.data);
+      
+      // Transform schedule to groups
+      const groupsData = scheduleResponse.data.map((item: any, index: number) => ({
+        id: item.groupId || `group-${index}`,
+        label: `${item.subject} Group`,
+        courseId: item.courseId || '',
+        courseTitle: item.subject,
+        courseDescription: '',
+        courseCredits: 3,
+        courseLevel: 1,
+        instructorId: instructorId,
+        enrolledStudentsCount: 25, // Default value
+        startTime: item.date,
+        location: item.room || 'N/A'
+      }));
+
+      setGroups(groupsData);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -79,160 +86,161 @@ export default function InstructorGroups() {
     setIsMaterialsModalOpen(true);
   };
 
-  const handleAddResources = (groupId: string) => {
-    setSelectedGroupForAdd(groupId);
+  const handleAddMaterial = (groupId: string, courseTitle: string) => {
+    setSelectedMaterialGroup({ groupId, courseTitle });
     setIsAddMaterialModalOpen(true);
   };
 
-  const handleMaterialAdded = () => {
-    // Refresh or notify parent component if needed
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return {
+      date: date.toLocaleDateString(),
+      time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      day: date.toLocaleDateString('en-US', { weekday: 'long' })
+    };
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-edusync-primary"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-edusync-primary"></div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-edusync-primary to-edusync-accent bg-clip-text text-transparent">
-          My Groups
-        </h1>
-        <div className="text-sm text-gray-500">
-          {groups.length} group{groups.length !== 1 ? 's' : ''} assigned
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">My Groups</h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">
+          Manage your groups and course materials
+        </p>
       </div>
 
-      <Tabs defaultValue="cards" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
-          <TabsTrigger value="cards" className="flex items-center gap-2">
-            <Grid className="h-4 w-4" />
-            Cards View
-          </TabsTrigger>
-          <TabsTrigger value="calendar" className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            Schedule View
-          </TabsTrigger>
+      <Tabs defaultValue="cards" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="cards">Groups Overview</TabsTrigger>
+          <TabsTrigger value="schedule">Schedule View</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="cards" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {groups.map((group, index) => (
-              <div
-                key={group.id}
-                className="group bg-white/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 p-6 hover:shadow-elevation transition-all duration-300 transform hover:-translate-y-1 animate-scale-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="px-3 py-1 bg-edusync-primary/10 text-edusync-primary text-xs font-medium rounded-full">
+        {/* Cards View */}
+        <TabsContent value="cards">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {groups.map((group, index) => {
+              const dateInfo = formatDate(group.startTime);
+              return (
+                <div
+                  key={group.id}
+                  className="group bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 dark:border-gray-700/50 p-6 hover:shadow-elevation transition-all duration-300 transform hover:-translate-y-1 animate-scale-in"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-800 dark:text-white group-hover:text-edusync-primary transition-colors duration-200">
+                        {group.courseTitle}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                         {group.label}
-                      </span>
-                      <span className="px-2 py-1 bg-edusync-accent/10 text-edusync-accent text-xs rounded-full">
-                        Level {group.courseLevel}
-                      </span>
+                      </p>
                     </div>
-                    <h3 className="font-bold text-gray-800 text-lg leading-tight group-hover:text-edusync-primary transition-colors duration-200">
-                      {group.courseTitle}
-                    </h3>
+                    <Badge variant="secondary">
+                      Level {group.courseLevel}
+                    </Badge>
                   </div>
-                </div>
 
-                <div className="space-y-3 mb-4">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Clock className="h-4 w-4" />
-                    {new Date(group.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - 
-                    {new Date(group.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <Clock className="h-4 w-4" />
+                      {dateInfo.day}, {dateInfo.time}
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <MapPin className="h-4 w-4" />
+                      {group.location}
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <Users className="h-4 w-4" />
+                      {group.enrolledStudentsCount} students
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <MapPin className="h-4 w-4" />
-                    {group.location || 'No location set'}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Users className="h-4 w-4" />
-                    {group.enrolledStudentsCount} / {group.maxStudents} students
-                  </div>
-                </div>
 
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => handleViewResources(group.id, group.courseTitle)}
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                  >
-                    <ExternalLink className="h-4 w-4 mr-1" />
-                    View Resources
-                  </Button>
-                  <Button
-                    onClick={() => handleAddResources(group.id)}
-                    size="sm"
-                    className="flex-1 bg-edusync-primary hover:bg-edusync-secondary"
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Resources
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleViewResources(group.id, group.courseTitle)}
+                      className="flex-1"
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
+                      View Materials
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleAddMaterial(group.id, group.courseTitle)}
+                      className="flex-1 bg-edusync-primary hover:bg-edusync-secondary"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Add Material
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {groups.length === 0 && (
-            <div className="text-center py-12 animate-fade-in">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-gray-400" />
-              </div>
-              <p className="text-gray-600">No groups assigned yet</p>
+            <div className="text-center py-12">
+              <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600 dark:text-gray-400">No groups assigned yet</p>
             </div>
           )}
         </TabsContent>
 
-        <TabsContent value="calendar" className="space-y-6">
-          <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-3">
-              <Calendar className="h-6 w-6 text-edusync-primary" />
+        {/* Schedule View */}
+        <TabsContent value="schedule">
+          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 dark:border-gray-700/50 p-6">
+            <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-edusync-primary" />
               Teaching Schedule
             </h2>
             
-            <div className="space-y-4">
-              {schedule.length > 0 ? (
-                schedule.map((item, index) => (
+            <div className="grid gap-4">
+              {schedule.map((item, index) => {
+                const dateInfo = formatDate(item.date);
+                return (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-4 bg-gradient-to-r from-edusync-primary/5 to-edusync-accent/5 rounded-xl border border-edusync-primary/20 hover:from-edusync-primary/10 hover:to-edusync-accent/10 transition-all duration-200"
+                    className="flex items-center justify-between p-4 bg-gradient-to-r from-edusync-primary/5 to-edusync-accent/5 hover:from-edusync-primary/10 hover:to-edusync-accent/10 rounded-xl border border-edusync-primary/20 transition-all duration-200"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-edusync-primary/10 rounded-lg flex items-center justify-center">
-                        <Calendar className="h-6 w-6 text-edusync-primary" />
-                      </div>
+                      <div className="w-2 h-2 bg-edusync-primary rounded-full"></div>
                       <div>
-                        <h3 className="font-semibold text-gray-800">{item.subject}</h3>
-                        <p className="text-sm text-gray-600">
-                          {item.day} • {item.time} • {item.room}
+                        <h3 className="font-semibold text-gray-800 dark:text-white">
+                          {item.subject}
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {dateInfo.day} • {item.time}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium text-edusync-primary">
-                        {new Date(item.date).toLocaleDateString()}
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {item.room}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {dateInfo.date}
                       </p>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Calendar className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <p className="text-gray-600">No scheduled classes</p>
-                </div>
-              )}
+                );
+              })}
             </div>
+
+            {schedule.length === 0 && (
+              <div className="text-center py-8">
+                <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-gray-400">No scheduled classes</p>
+              </div>
+            )}
           </div>
         </TabsContent>
       </Tabs>
@@ -248,12 +256,17 @@ export default function InstructorGroups() {
       )}
 
       {/* Add Material Modal */}
-      <AddMaterialModal
-        isOpen={isAddMaterialModalOpen}
-        onClose={() => setIsAddMaterialModalOpen(false)}
-        groupId={selectedGroupForAdd}
-        onMaterialAdded={handleMaterialAdded}
-      />
+      {selectedMaterialGroup && (
+        <AddMaterialModal
+          isOpen={isAddMaterialModalOpen}
+          onClose={() => setIsAddMaterialModalOpen(false)}
+          groupId={selectedMaterialGroup.groupId}
+          onMaterialAdded={() => {
+            // Refresh materials when new one is added
+            setIsAddMaterialModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }

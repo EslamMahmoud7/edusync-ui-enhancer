@@ -1,34 +1,27 @@
+
 import { useState, useEffect } from "react";
-import { Search, Calendar, User, ExternalLink, Clock } from "lucide-react";
-import api from "../../services/api";
-import type { CourseDto } from "../../Context/auth-types";
+import { BookOpen, Users, Award, ExternalLink, Calendar, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import MaterialsModal from "../../components/MaterialsModal";
+import api from "../../services/api";
 
-const fetchMyCourses = async (): Promise<CourseDto[]> => {
-  try {
-    const stored = localStorage.getItem("eduSyncUser");
-    if (!stored) throw new Error("Not logged in");
-    const { id: studentId, token } = JSON.parse(stored);
-
-    const { data } = await api.get<CourseDto[]>(
-      `/api/Course/my-courses-via-groups/${studentId}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-
-    return data;
-  } catch (err) {
-    console.error("Error loading courses:", err);
-    return [];
-  }
-};
+interface GroupWithCourse {
+  id: string;
+  label: string;
+  courseId: string;
+  courseTitle: string;
+  courseDescription: string;
+  courseCredits: number;
+  courseLevel: number;
+  startTime: string;
+  location: string;
+}
 
 export default function CoursesPage() {
-  const [courses, setCourses] = useState<CourseDto[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedLevel, setSelectedLevel] = useState("all");
+  const [groups, setGroups] = useState<GroupWithCourse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedMaterialGroup, setSelectedMaterialGroup] = useState<{
     groupId: string;
     courseTitle: string;
@@ -36,186 +29,158 @@ export default function CoursesPage() {
   const [isMaterialsModalOpen, setIsMaterialsModalOpen] = useState(false);
 
   useEffect(() => {
-    fetchMyCourses()
-      .then((data) => {
-        setCourses(data);
-      })
-      .finally(() => setLoading(false));
+    fetchCourses();
   }, []);
+
+  const fetchCourses = async () => {
+    try {
+      const stored = localStorage.getItem("eduSyncUser");
+      if (!stored) throw new Error("You are not logged in.");
+
+      const { id: studentId, token } = JSON.parse(stored);
+      const headers = { Authorization: `Bearer ${token}` };
+
+      const response = await api.get<GroupWithCourse[]>(
+        `/api/CourseSchedule/student/${studentId}`,
+        { headers }
+      );
+      setGroups(response.data);
+    } catch (err: any) {
+      console.error("Courses fetch error:", err);
+      setError(err.message || "Failed to load courses");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleViewResources = (groupId: string, courseTitle: string) => {
     setSelectedMaterialGroup({ groupId, courseTitle });
     setIsMaterialsModalOpen(true);
   };
 
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return {
+      date: date.toLocaleDateString(),
+      time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      day: date.toLocaleDateString('en-US', { weekday: 'long' })
+    };
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-fade-in">
-          <div className="w-12 h-12 border-4 border-edusync-primary/20 border-t-edusync-primary rounded-full animate-spin"></div>
-          <p className="mt-4 text-gray-600">Loading your courses…</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-edusync-primary"></div>
       </div>
     );
   }
 
-  if (!courses.length) {
+  if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[400px] animate-fade-in">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-edusync-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Search className="w-8 h-8 text-edusync-primary" />
-          </div>
-          <p className="text-gray-600">You're not enrolled in any courses yet.</p>
+      <div className="space-y-8">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 text-red-600 dark:text-red-400">
+          <h2 className="text-xl font-semibold mb-2">Error Loading Courses</h2>
+          <p>{error}</p>
         </div>
       </div>
     );
   }
-
-  const levels = [...new Set(courses.map(c => c.level))].sort();
-  const filtered = courses.filter(
-    (c) => {
-      const matchesSearch =
-        c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.description.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesLevel =
-        selectedLevel === "all" || c.level.toString() === selectedLevel;
-
-      return matchesLevel && matchesSearch;
-    }
-  );
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-edusync-primary to-edusync-accent bg-clip-text text-transparent">
-          My Courses
-        </h1>
-        <div className="text-sm text-gray-500">
-          {filtered.length} course{filtered.length !== 1 ? 's' : ''} found
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-edusync-primary via-edusync-secondary to-edusync-accent p-8 text-white">
+        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="relative z-10">
+          <h1 className="text-4xl font-bold mb-4 animate-fade-in">
+            My Courses 📚
+          </h1>
+          <p
+            className="text-xl opacity-90 max-w-2xl animate-fade-in"
+            style={{ animationDelay: "0.2s" }}
+          >
+            Explore your enrolled courses and access study materials
+          </p>
+        </div>
+        <div className="absolute top-0 right-0 translate-x-12 -translate-y-12">
+          <div className="w-64 h-64 rounded-full bg-white/10 blur-3xl"></div>
         </div>
       </div>
 
-      {/* Level Tabs */}
-      <div className="flex gap-3 overflow-x-auto pb-2">
-        <button
-          onClick={() => setSelectedLevel("all")}
-          className={`px-6 py-3 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-300 transform hover:scale-105 ${
-            selectedLevel === "all"
-              ? "bg-gradient-to-r from-edusync-primary to-edusync-secondary text-white shadow-lg"
-              : "bg-white/80 backdrop-blur-sm text-gray-700 border border-gray-200/50 hover:bg-edusync-primary/5 hover:border-edusync-primary/20"
-          }`}
-        >
-          All Levels
-          <span className="ml-2 px-2 py-1 text-xs rounded-full bg-white/20">
-            {courses.length}
-          </span>
-        </button>
-        {levels.map((level, index) => (
-          <button
-            key={level}
-            onClick={() => setSelectedLevel(level.toString())}
-            className={`px-6 py-3 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-300 transform hover:scale-105 ${
-              selectedLevel === level.toString()
-                ? "bg-gradient-to-r from-edusync-primary to-edusync-secondary text-white shadow-lg"
-                : "bg-white/80 backdrop-blur-sm text-gray-700 border border-gray-200/50 hover:bg-edusync-primary/5 hover:border-edusync-primary/20"
-            }`}
-            style={{ animationDelay: `${index * 100}ms` }}
-          >
-            Level {level}
-            <span className="ml-2 px-2 py-1 text-xs rounded-full bg-white/20">
-              {courses.filter(c => c.level === level).length}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Search */}
-      <div className="relative max-w-md">
-        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400" />
-        </div>
-        <input
-          type="text"
-          placeholder="Search courses..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-12 pr-4 py-3 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-edusync-primary/20 focus:border-edusync-primary transition-all duration-200"
-        />
-      </div>
-
-      {/* Course Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filtered.map((course, index) => (
-          <div
-            key={course.id}
-            className="group bg-white/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 p-6 hover:shadow-elevation transition-all duration-300 transform hover:-translate-y-1 animate-scale-in"
-            style={{ animationDelay: `${index * 100}ms` }}
-          >
-            {/* Header */}
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="px-3 py-1 bg-edusync-primary/10 text-edusync-primary text-xs font-medium rounded-full">
-                    {course.code}
-                  </span>
-                  <span className="px-2 py-1 bg-edusync-accent/10 text-edusync-accent text-xs rounded-full">
-                    {course.credits} credits
-                  </span>
+      {/* Courses Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {groups.map((group, index) => {
+          const dateInfo = formatDate(group.startTime);
+          return (
+            <div
+              key={group.id}
+              className="group bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 dark:border-gray-700/50 p-6 hover:shadow-elevation transition-all duration-300 transform hover:-translate-y-1 animate-scale-in"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              {/* Course Header */}
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <h3 className="font-bold text-lg text-gray-800 dark:text-white group-hover:text-edusync-primary transition-colors duration-200">
+                    {group.courseTitle}
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    {group.label}
+                  </p>
                 </div>
-                <h3 className="font-bold text-gray-800 text-lg leading-tight group-hover:text-edusync-primary transition-colors duration-200">
-                  {course.title}
-                </h3>
+                <div className="flex flex-col gap-1">
+                  <Badge variant="secondary">
+                    Level {group.courseLevel}
+                  </Badge>
+                  <Badge variant="outline">
+                    {group.courseCredits} Credits
+                  </Badge>
+                </div>
               </div>
-            </div>
 
-            {/* Description */}
-            <div className="mb-4">
-              <p className="text-sm text-gray-600 line-clamp-3">
-                {course.description}
-              </p>
-            </div>
-
-            {/* Level Badge */}
-            <div className="mb-4">
-              <span className="px-3 py-1 bg-blue-50 text-blue-700 text-sm font-medium rounded-full">
-                Level {course.level}
-              </span>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-2">
-              {course.resourceLink && (
-                <a
-                  href={course.resourceLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-center gap-2 flex-1 py-3 bg-gradient-to-r from-edusync-primary to-edusync-secondary text-white rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  <span className="font-medium">Course Resources</span>
-                </a>
+              {/* Course Description */}
+              {group.courseDescription && (
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
+                  {group.courseDescription}
+                </p>
               )}
-              <button
-                onClick={() => handleViewResources(course.groupId, course.title)}
-                className="flex items-center justify-center gap-2 flex-1 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+
+              {/* Course Details */}
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <Calendar className="h-4 w-4" />
+                  {dateInfo.day}, {dateInfo.time}
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <MapPin className="h-4 w-4" />
+                  {group.location || 'Location TBA'}
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <Button
+                onClick={() => handleViewResources(group.id, group.courseTitle)}
+                className="w-full bg-edusync-primary hover:bg-edusync-secondary transition-colors duration-200"
               >
-                <ExternalLink className="w-4 h-4" />
-                <span className="font-medium">Materials</span>
-              </button>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                View Resources
+              </Button>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {filtered.length === 0 && searchTerm && (
-        <div className="text-center py-12 animate-fade-in">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Search className="w-8 h-8 text-gray-400" />
+      {/* Empty State */}
+      {groups.length === 0 && (
+        <div className="text-center py-12">
+          <div className="w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
+            <BookOpen className="w-12 h-12 text-gray-400" />
           </div>
-          <p className="text-gray-600">No courses found matching "{searchTerm}"</p>
+          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            No Courses Enrolled
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+            You haven't enrolled in any courses yet. Contact your academic advisor to get started.
+          </p>
         </div>
       )}
 
