@@ -4,7 +4,7 @@ import { GraduationCap, Filter } from 'lucide-react';
 import { useAuth } from '../../Context/useAuth';
 import { useToast } from '../../hooks/use-toast';
 import { academicRecordsService } from '../../services/academicRecords';
-import { AcademicRecordDTO, AcademicRecordStatus } from '../../types/academic';
+import { AcademicRecordDTO, AssessmentType, AcademicRecordStatus } from '../../types/academic';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import SearchInput from '../../components/SearchInput';
 
@@ -54,9 +54,13 @@ export default function StudentAcademicRecords() {
     const filtered = records.filter(record => 
       record.courseTitle.toLowerCase().includes(query) ||
       record.groupLabel.toLowerCase().includes(query) ||
-      (record.term && record.term.toLowerCase().includes(query))
+      record.term.toLowerCase().includes(query)
     );
     setFilteredRecords(filtered);
+  };
+
+  const getAssessmentTypeLabel = (type: AssessmentType) => {
+    return Object.keys(AssessmentType)[type] || 'Unknown';
   };
 
   const getStatusLabel = (status: AcademicRecordStatus) => {
@@ -104,6 +108,9 @@ export default function StudentAcademicRecords() {
             <GraduationCap className="h-8 w-8 text-edusync-primary" />
             My Academic Records
           </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            Current GPA: <span className="font-semibold text-edusync-primary">{calculateGPA()}</span>
+          </p>
         </div>
       </div>
 
@@ -151,8 +158,11 @@ export default function StudentAcademicRecords() {
               <TableRow>
                 <TableHead>Course</TableHead>
                 <TableHead>Group</TableHead>
+                <TableHead>Assessment</TableHead>
                 <TableHead>Grade</TableHead>
                 <TableHead>Term</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Date</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -160,12 +170,21 @@ export default function StudentAcademicRecords() {
                 <TableRow key={record.id}>
                   <TableCell className="font-medium">{record.courseTitle}</TableCell>
                   <TableCell>{record.groupLabel}</TableCell>
+                  <TableCell>{getAssessmentTypeLabel(record.assessmentType)}</TableCell>
                   <TableCell>
                     <span className={`font-semibold text-lg ${getGradeColor(record.gradeValue)}`}>
                       {record.gradeValue}%
                     </span>
                   </TableCell>
                   <TableCell>{record.term}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(record.status)}`}>
+                      {getStatusLabel(record.status)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-600">
+                    {new Date(record.updatedAt).toLocaleDateString()}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
