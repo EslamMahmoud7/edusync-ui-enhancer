@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import { Users, BookOpen, UserCheck, BarChart3, Plus, Settings } from "lucide-react";
+import { Users, BookOpen, UserCheck, BarChart3, Plus, Settings, Megaphone } from "lucide-react";
 import { useAuth } from "../../Context/useAuth";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { announcementService } from "../../services/announcement";
+import type { CreateAnnouncementDTO } from "../../types/announcement";
 
 interface AdminDashboardCountsDTO {
   totalStudents: number;
@@ -26,6 +28,9 @@ export default function AdminDashboard() {
   const [dashData, setDashData] = useState<AdminDashboardCountsDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [announcementTitle, setAnnouncementTitle] = useState("");
+  const [announcementMessage, setAnnouncementMessage] = useState("");
+  const [isPostingAnnouncement, setIsPostingAnnouncement] = useState(false);
 
   useEffect(() => {
     async function fetchCounts() {
@@ -51,6 +56,28 @@ export default function AdminDashboard() {
 
     fetchCounts();
   }, []);
+
+  const handlePostAnnouncement = async () => {
+    if (!announcementTitle.trim() || !announcementMessage.trim()) {
+      return;
+    }
+
+    setIsPostingAnnouncement(true);
+    try {
+      const announcementData: CreateAnnouncementDTO = {
+        title: announcementTitle,
+        message: announcementMessage
+      };
+      
+      await announcementService.create(announcementData);
+      setAnnouncementTitle("");
+      setAnnouncementMessage("");
+    } catch (error) {
+      console.error("Error posting announcement:", error);
+    } finally {
+      setIsPostingAnnouncement(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -159,6 +186,50 @@ export default function AdminDashboard() {
         </div>
         <div className="absolute top-0 right-0 translate-x-12 -translate-y-12">
           <div className="w-64 h-64 rounded-full bg-white/10 blur-3xl"></div>
+        </div>
+      </div>
+
+      {/* Post Announcement Section */}
+      <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 dark:border-gray-700/50 p-6">
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-3">
+          <Megaphone className="h-6 w-6 text-edusync-primary" />
+          Post Announcement
+        </h2>
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="announcementTitle" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Title
+            </label>
+            <input
+              id="announcementTitle"
+              type="text"
+              value={announcementTitle}
+              onChange={(e) => setAnnouncementTitle(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-edusync-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              placeholder="Enter announcement title..."
+            />
+          </div>
+          <div>
+            <label htmlFor="announcementMessage" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Message
+            </label>
+            <textarea
+              id="announcementMessage"
+              value={announcementMessage}
+              onChange={(e) => setAnnouncementMessage(e.target.value)}
+              rows={4}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-edusync-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              placeholder="Enter announcement message..."
+            />
+          </div>
+          <button
+            onClick={handlePostAnnouncement}
+            disabled={!announcementTitle.trim() || !announcementMessage.trim() || isPostingAnnouncement}
+            className="px-6 py-2 bg-edusync-primary hover:bg-edusync-secondary disabled:bg-gray-400 text-white rounded-lg transition-colors duration-200 flex items-center gap-2"
+          >
+            <Megaphone className="h-4 w-4" />
+            {isPostingAnnouncement ? "Posting..." : "Post Announcement"}
+          </button>
         </div>
       </div>
 

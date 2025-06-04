@@ -1,9 +1,12 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, Search, LogOut, Menu, AlertCircle, Moon, Sun, Globe } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { announcementService } from '../services/announcement';
+import type { AnnouncementDTO } from '../types/announcement';
 
 interface NavbarProps {
   toggleSidebar: () => void;
@@ -17,39 +20,24 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
   const { currentLanguage, changeLanguage, isRTL } = useLanguage();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+  const [announcements, setAnnouncements] = useState<AnnouncementDTO[]>([]);
+
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        const data = await announcementService.getAll();
+        setAnnouncements(data);
+      } catch (error) {
+        console.error('Error fetching announcements:', error);
+      }
+    };
+
+    fetchAnnouncements();
+  }, []);
 
   const handleLogout = () => {
     navigate("/login");
   };
-
-  const notifications = [
-    {
-      id: 101,
-      title: "Assignment Deadline",
-      message: "Math assignment due tomorrow.",
-      time: "20 min ago",
-      read: false,
-      type: "assignment",
-    },
-    {
-      id: 102,
-      title: "Class Cancelled",
-      message: "Physics lecture has been cancelled.",
-      time: "2 hrs ago",
-      read: true,
-      type: "system",
-    },
-    {
-      id: 103,
-      title: "Grade Released",
-      message: "Your English essay has been graded.",
-      time: "Yesterday",
-      read: true,
-      type: "system",
-    },
-  ];
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
 
   // Convert numeric role to string for navigation paths, handle legacy role 0
   const roleString = (role === 2) ? "admin" : "student";
@@ -148,9 +136,9 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
                 className="relative p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-edusync-warning hover:bg-edusync-warning/10 transition-all duration-200 transform hover:scale-105 active:scale-95"
               >
                 <Bell className="h-5 w-5" />
-                {unreadCount > 0 && (
+                {announcements.length > 0 && (
                   <span className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-edusync-error to-red-500 text-white text-xs font-medium rounded-full flex items-center justify-center animate-bounce-gentle">
-                    {unreadCount}
+                    {announcements.length}
                   </span>
                 )}
               </button>
@@ -165,40 +153,33 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
                     </div>
                     
                     <div className="max-h-64 overflow-y-auto">
-                      {notifications.map((notification, index) => (
+                      {announcements.length > 0 ? announcements.map((announcement, index) => (
                         <div
-                          key={notification.id}
-                          className={`p-4 border-b border-gray-100/50 dark:border-gray-700/50 last:border-b-0 hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors duration-200 ${
-                            !notification.read ? "bg-edusync-primary/5" : ""
-                          }`}
+                          key={announcement.id}
+                          className="p-4 border-b border-gray-100/50 dark:border-gray-700/50 last:border-b-0 hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors duration-200"
                           style={{ animationDelay: `${index * 50}ms` }}
                         >
                           <div className="flex justify-between items-start gap-2">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="font-medium text-gray-800 dark:text-gray-200 text-sm">
-                                  {notification.title}
+                                  {announcement.title}
                                 </span>
-                                {!notification.read && (
-                                  <div className="w-2 h-2 bg-edusync-primary rounded-full"></div>
-                                )}
                               </div>
                               <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                                {notification.message}
+                                {announcement.message}
                               </p>
-                              {notification.type === "assignment" && (
-                                <div className="flex items-center gap-1 text-edusync-error">
-                                  <AlertCircle className="h-3 w-3" />
-                                  <span className="text-xs font-medium">Action Required</span>
-                                </div>
-                              )}
                             </div>
                             <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                              {notification.time}
+                              {new Date(announcement.dateCreated).toLocaleDateString()}
                             </span>
                           </div>
                         </div>
-                      ))}
+                      )) : (
+                        <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+                          No announcements available
+                        </div>
+                      )}
                     </div>
                     
                     <div className="p-3 bg-gray-50/50 dark:bg-gray-700/50 border-t border-gray-200/50 dark:border-gray-600/50">
