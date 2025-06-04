@@ -131,12 +131,12 @@ export default function AdminDashboard() {
       },
     },
     {
-      title: "System Settings",
-      description: "Configure system-wide settings",
+      title: "Manage Academic Records",
+      description: "Manage Academic Records",
       icon: <Settings className="h-8 w-8" />,
       color: "bg-orange-500",
       action: () => {
-        navigate("/admin/settings");
+        navigate("/admin/academic-records");
       },
     },
   ];

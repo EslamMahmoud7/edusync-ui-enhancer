@@ -155,7 +155,6 @@ export default function InstructorAssignments() {
                 <TableHead>Course</TableHead>
                 <TableHead>Schedule</TableHead>
                 <TableHead>Location</TableHead>
-                <TableHead>Students</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -192,11 +191,7 @@ export default function InstructorAssignments() {
                       {group.location}
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">
-                      {group.enrolledStudentsCount} students
-                    </Badge>
-                  </TableCell>
+                  
                 </TableRow>
               ))}
             </TableBody>

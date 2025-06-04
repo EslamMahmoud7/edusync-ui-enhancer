@@ -52,7 +52,7 @@ export const materialService = {
   },
 
   // Delete material
-  delete: async (materialId: string, requestingUserId: string): Promise<void> => {
-    await api.delete(`/api/material/${materialId}?requestingUserId=${requestingUserId}`);
+  delete: async (materialId: string): Promise<void> => {
+    await api.delete(`/api/material/${materialId}`);
   }
 };

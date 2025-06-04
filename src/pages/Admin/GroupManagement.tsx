@@ -342,24 +342,7 @@ export default function GroupManagement() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={createForm.control}
-                  name="maxStudents"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Max Students</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="Enter max students"
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                
                 <div className="flex justify-end gap-2">
                   <Button
                     type="button"
@@ -393,7 +376,6 @@ export default function GroupManagement() {
               <TableHead>Instructor</TableHead>
               <TableHead>Schedule</TableHead>
               <TableHead>Location</TableHead>
-              <TableHead>Students</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -412,12 +394,6 @@ export default function GroupManagement() {
                   {group.endTime.slice(0, 16).replace('T', ' ')}
                 </TableCell>
                 <TableCell>{group.location}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    {group.numberOfStudents}/{group.maxStudents}
-                  </div>
-                </TableCell>
                 <TableCell>
                   <div className="flex gap-2">
                     <Button
@@ -561,24 +537,7 @@ export default function GroupManagement() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={editForm.control}
-                name="maxStudents"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Max Students</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Enter max students"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              
               <div className="flex justify-end gap-2">
                 <Button
                   type="button"

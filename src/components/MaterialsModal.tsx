@@ -15,6 +15,7 @@ interface MaterialsModalProps {
 export default function MaterialsModal({ isOpen, onClose, groupId, courseTitle }: MaterialsModalProps) {
   const [materials, setMaterials] = useState<MaterialDTO[]>([]);
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,7 +35,19 @@ export default function MaterialsModal({ isOpen, onClose, groupId, courseTitle }
       setLoading(false);
     }
   };
-
+  const handleDeleteMaterial = async (materialId: string) => {  
+    if (window.confirm('Are you sure you want to delete this material?')) {
+      setActionLoading(true);
+      try {
+        await materialService.delete(materialId);
+        setMaterials(prevMaterials => prevMaterials.filter(m => m.id !== materialId));
+      } catch (error) {
+        console.error('Error deleting material:', error);
+      } finally {
+        setActionLoading(false);
+      }
+    }
+  };
   const getVideoEmbedUrl = (url: string) => {
     if (url.includes('youtube.com/watch?v=')) {
       const videoId = url.split('v=')[1].split('&')[0];
@@ -145,6 +158,9 @@ export default function MaterialsModal({ isOpen, onClose, groupId, courseTitle }
                     <ExternalLink className="h-4 w-4 mr-1" />
                     {material.type === 0 ? 'View Document' : 'Download'}
                   </Button>
+
+                  
+
                 </div>
               </div>
             ))

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { BookOpen, Users, ClipboardList, Calendar, Plus } from "lucide-react";
 import { useAuth } from "../../Context/useAuth";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
 interface InstructorDashboardCountsDTO {
@@ -14,6 +15,7 @@ interface InstructorDashboardCountsDTO {
 export default function InstructorDashboard() {
   const { user } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const [counts, setCounts] = useState<InstructorDashboardCountsDTO | null>(null);
   const [loading, setLoading] = useState(true);
@@ -112,7 +114,7 @@ export default function InstructorDashboard() {
       icon: <Plus className="h-8 w-8" />,
       color: "bg-blue-500",
       action: () => {
-        /* Navigate to assignment creation */
+        navigate("/instructor/assignments")
       },
     },
     {
@@ -121,7 +123,7 @@ export default function InstructorDashboard() {
       icon: <Users className="h-8 w-8" />,
       color: "bg-green-500",
       action: () => {
-        /* Navigate to group management */
+        navigate("/instructor/groups")
       },
     },
   ];

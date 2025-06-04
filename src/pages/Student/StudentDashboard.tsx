@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   BookOpen,
@@ -8,14 +7,14 @@ import {
   Award,
   Calendar,
   Users,
-  ExternalLink,
+  ExternalLink, // Kept in case it's used elsewhere or by other components
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../Context/useAuth";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "../../contexts/LanguageContext";
 import AnnouncementModal from "../../components/AnnouncementModal";
-import MaterialsModal from "../../components/MaterialsModal";
+// import MaterialsModal from "../../components/MaterialsModal"; // Commented out as likely unused
 import api from "../../services/api";
 import type { AssignmentDTO } from "../../Context/auth-types";
 
@@ -27,7 +26,7 @@ interface StudentDashboardData {
   todaysClasses: Array<{
     time: string;
     subject: string;
-    location: string;
+    location:string;
   }>;
   upcomingAssignments: Array<unknown>;
   announcements: Array<{
@@ -38,13 +37,13 @@ interface StudentDashboardData {
 }
 
 interface GroupWithCourse {
-  id: string;
-  label: string;
-  courseId: string;
-  courseTitle: string;
-  courseDescription: string;
-  courseCredits: number;
-  courseLevel: number;
+  groupid: string;
+  date: string;
+  day: string;
+  time: string;
+  subject: string;
+  room: number;
+  doctor: number;
 }
 
 export default function StudentDashboard() {
@@ -66,11 +65,20 @@ export default function StudentDashboard() {
     date: string;
   } | null>(null);
   const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
+
+  // State and handler for MaterialsModal are likely no longer needed with the new requirement
+  /*
   const [selectedMaterialGroup, setSelectedMaterialGroup] = useState<{
     groupId: string;
     courseTitle: string;
   } | null>(null);
   const [isMaterialsModalOpen, setIsMaterialsModalOpen] = useState(false);
+
+  const handleViewResources = (groupId: string, courseTitle: string) => {
+    setSelectedMaterialGroup({ groupId, courseTitle });
+    setIsMaterialsModalOpen(true);
+  };
+  */
 
   useEffect(() => {
     async function fetchData() {
@@ -130,12 +138,6 @@ export default function StudentDashboard() {
     setIsAnnouncementModalOpen(true);
   };
 
-  const handleViewResources = (groupId: string, courseTitle: string) => {
-    setSelectedMaterialGroup({ groupId, courseTitle });
-    setIsMaterialsModalOpen(true);
-  };
-
-  // Only build stats once dashData is defined
   const stats = dashData
     ? [
         {
@@ -274,7 +276,7 @@ export default function StudentDashboard() {
 
       {/* Quick Actions and Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* My Courses with Resources */}
+        {/* My Courses */}
         <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 dark:border-gray-700/50 p-6 animate-fade-in">
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-3">
             <BookOpen className="h-6 w-6 text-edusync-primary" />
@@ -284,25 +286,25 @@ export default function StudentDashboard() {
             {groups.length > 0 ? (
               groups.map((group, index) => (
                 <div
-                  key={group.id}
+                  key={group.groupid}
                   className="group p-4 bg-gradient-to-r from-edusync-primary/5 to-edusync-accent/5 hover:from-edusync-primary/10 hover:to-edusync-accent/10 rounded-xl border border-edusync-primary/20 transition-all duration-200 animate-fade-in"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-800 dark:text-white group-hover:text-edusync-primary transition-colors duration-200">
-                        {group.courseTitle}
+                        {group.subject}
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        {group.label} • Level {group.courseLevel} • {group.courseCredits} Credits
+                        {group.subject} • Dr. {group.doctor} • Room {group.room}
                       </p>
                     </div>
                     <button
-                      onClick={() => handleViewResources(group.id, group.courseTitle)}
-                      className="ml-3 px-3 py-1 text-xs bg-edusync-primary text-white rounded-lg hover:bg-edusync-secondary transition-colors duration-200"
+                      onClick={() => navigate('/courses')} // MODIFIED: Navigates directly to /courses
+                      className="ml-3 px-3 py-1 text-xs bg-edusync-primary text-white rounded-lg hover:bg-edusync-secondary transition-colors duration-200 flex items-center"
                     >
-                      <ExternalLink className="h-3 w-3 inline mr-1" />
-                      Resources
+                      <BookOpen className="h-3 w-3 inline mr-1" /> {/* MODIFIED: Icon */}
+                      View Courses {/* MODIFIED: Text */}
                     </button>
                   </div>
                 </div>
@@ -376,7 +378,8 @@ export default function StudentDashboard() {
         />
       )}
 
-      {/* Materials Modal */}
+      {/* Materials Modal section commented out as likely unused */}
+      {/*
       {selectedMaterialGroup && (
         <MaterialsModal
           isOpen={isMaterialsModalOpen}
@@ -385,6 +388,7 @@ export default function StudentDashboard() {
           courseTitle={selectedMaterialGroup.courseTitle}
         />
       )}
+      */}
     </div>
   );
 }

@@ -157,19 +157,7 @@ export default function CourseManagement() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={createForm.control}
-                  name="department"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Department</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter department" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+               
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                     Cancel
@@ -184,18 +172,11 @@ export default function CourseManagement() {
         </Dialog>
       </div>
 
-      <SearchInput
-        placeholder="Search courses..."
-        onSearch={setSearchQuery}
-        className="max-w-md"
-      />
-
       <div className="bg-white rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Title</TableHead>
-              <TableHead>Department</TableHead>
               <TableHead>Credits</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Actions</TableHead>
@@ -205,7 +186,6 @@ export default function CourseManagement() {
             {filteredCourses.map((course) => (
               <TableRow key={course.id}>
                 <TableCell className="font-medium">{course.title}</TableCell>
-                <TableCell>{course.department}</TableCell>
                 <TableCell>{course.credits}</TableCell>
                 <TableCell>{course.description}</TableCell>
                 <TableCell>
@@ -284,19 +264,7 @@ export default function CourseManagement() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={editForm.control}
-                name="department"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Department</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter department" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => setEditingCourse(null)}>
                   Cancel

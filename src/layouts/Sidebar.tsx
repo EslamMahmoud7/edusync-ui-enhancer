@@ -97,11 +97,6 @@
       path: "/instructor/grading",
       icon: <BarChart2 size={18} />,
     },
-    {
-      label: "Schedule",
-      path: "/instructor/schedule",
-      icon: <CalendarDays size={18} />,
-    },
   ];
 
   const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(

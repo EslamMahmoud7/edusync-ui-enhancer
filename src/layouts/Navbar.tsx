@@ -86,19 +86,6 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
             </button>
           </div>
 
-          {/* Center Search */}
-          <div className="flex-1 max-w-md mx-8 hidden md:block">
-            <div className="relative group">
-              <div className={`absolute inset-y-0 ${isRTL ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none`}>
-                <Search className="h-5 w-5 text-gray-400 group-focus-within:text-edusync-primary transition-colors duration-200" />
-              </div>
-              <input
-                type="text"
-                placeholder={t('common.search')}
-                className={`block w-full ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2.5 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200/60 dark:border-gray-600/60 rounded-xl text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-edusync-primary/20 focus:border-edusync-primary transition-all duration-200 hover:bg-white/80 dark:hover:bg-gray-800/80`}
-              />
-            </div>
-          </div>
 
           {/* Right Section */}
           <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
