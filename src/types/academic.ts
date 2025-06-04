@@ -1,63 +1,57 @@
+export enum AssessmentType {
+  Midterm = 0,
+  Final = 1,
+  Coursework = 2,
+  Quiz = 3,
+  Project = 4,
+  Attendance = 5,
+  Participation = 6,
+  Other = 7,
+}
+
+export enum AcademicRecordStatus {
+  Provisional = 0,
+  Final = 1,
+}
 
 export interface AcademicRecordDTO {
   id: string;
   studentId: string;
-  studentName: string;
+  studentFullName: string; 
   groupId: string;
   groupLabel: string;
+  courseId: string;    
+  courseCode: string; 
   courseTitle: string;
-  grade?: number;
+  instructorId?: string; 
+  instructorFullName?: string;
   gradeValue: number;
-  status: AcademicRecordStatus;
   assessmentType: AssessmentType;
   term: string;
-  createdDate: string;
-  updatedDate?: string;
+  status: AcademicRecordStatus;
   dateRecorded: string;
 }
 
-export interface CreateAcademicRecordDTO {
-  studentId: string;
-  groupId: string;
-  grade?: number;
-  gradeValue: number;
-  status?: AcademicRecordStatus;
-  assessmentType: AssessmentType;
-  term: string;
-}
-
 export interface UpdateAcademicRecordDTO {
-  grade?: number;
   gradeValue?: number;
-  status?: AcademicRecordStatus;
   assessmentType?: AssessmentType;
   term?: string;
+  instructorId?: string | null;
+  status?: AcademicRecordStatus;
+  dateRecorded?: string;
 }
 
 export interface UploadAcademicRecordsCsvDTO {
-  file: File;
+  csvFile: File;
+  groupId: string;
+  term: string;
+  assessmentType: AssessmentType;
+  uploadingInstructorId?: string;
+  defaultStatus?: AcademicRecordStatus;
 }
 
 export interface BulkAddAcademicRecordsResultDTO {
-  message: string;
-  successfullyAddedCount: number;
   totalRowsAttempted: number;
-  recordsAdded: number;
-}
-
-export enum AcademicRecordStatus {
-  Pending = 0,
-  Completed = 1,
-  Graded = 2,
-  Provisional = 3,
-  Final = 4
-}
-
-export enum AssessmentType {
-  Quiz = 0,
-  Assignment = 1,
-  Exam = 2,
-  Project = 3,
-  Midterm = 4,
-  Final = 5
+  successfullyAddedCount: number;
+  errorMessages: string[];
 }
