@@ -35,6 +35,7 @@ import InstructorGroups from "./pages/Instructor/InstructorGroups";
 import InstructorAssignments from "./pages/Instructor/InstructorAssignments";
 import InstructorGrading from "./pages/Instructor/InstructorGrading";
 import './i18n/config';
+import Notifications from "./pages/Notifications";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,11 @@ const App = () => (
                         <Profile />
                       </RoleGuard>
                     } />
+                    <Route path="notifications" element={
+                      <RoleGuard allowedRoles={[0, 1, 2, 3]}>
+                        <Notifications />
+                      </RoleGuard>
+                    } />
                     <Route path="schedule" element={
                       <RoleGuard allowedRoles={[0, 1]}>
                         <SchedulePage />
@@ -107,6 +113,11 @@ const App = () => (
                     <Route path="admin/users" element={
                       <RoleGuard allowedRoles={[2]}>
                         <UserManagement />
+                      </RoleGuard>
+                    } />
+                    <Route path="admin/notifications" element={
+                      <RoleGuard allowedRoles={[2]}>
+                        <Notifications />
                       </RoleGuard>
                     } />
 
