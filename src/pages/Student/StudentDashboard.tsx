@@ -8,7 +8,7 @@ import {
   Calendar,
   Users,
   ExternalLink,
-  Upload, // Fixed: Add Upload import
+  Upload,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../Context/useAuth";
@@ -84,7 +84,6 @@ export default function StudentDashboard() {
 
         const headers = { Authorization: `Bearer ${token}` };
 
-        // 1. Fetch dashboard data
         const dashResponse = await api.get<StudentDashboardData>(
           `/api/dashboard/${studentId}`,
           { headers }
@@ -98,14 +97,12 @@ export default function StudentDashboard() {
 
         setDashData(dataFromServer);
 
-        // 2. Fetch groups (for courses and materials)
         const groupsResponse = await api.get<GroupWithCourse[]>(
           `/api/CourseSchedule/student/${studentId}`,
           { headers }
         );
         setGroups(groupsResponse.data);
 
-        // 3. Fetch assignments
         const assignmentsResponse = await api.get<AssignmentDTO[]>(
           `/api/Assignment/student/${studentId}`,
           { headers }
@@ -137,7 +134,6 @@ export default function StudentDashboard() {
   };
 
   const handleSubmitSuccess = () => {
-    // Refresh assignments or update UI as needed
     console.log('Assignment submitted successfully');
   };
 
@@ -240,7 +236,6 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => (
           <div
@@ -277,9 +272,7 @@ export default function StudentDashboard() {
         ))}
       </div>
 
-      {/* Quick Actions and Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* My Courses */}
         <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 dark:border-gray-700/50 p-6 animate-fade-in">
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-3">
             <BookOpen className="h-6 w-6 text-edusync-primary" />
@@ -303,11 +296,11 @@ export default function StudentDashboard() {
                       </p>
                     </div>
                     <button
-                      onClick={() => navigate('/courses')} // MODIFIED: Navigates directly to /courses
+                      onClick={() => navigate('/courses')} 
                       className="ml-3 px-3 py-1 text-xs bg-edusync-primary text-white rounded-lg hover:bg-edusync-secondary transition-colors duration-200 flex items-center"
                     >
-                      <BookOpen className="h-3 w-3 inline mr-1" /> {/* MODIFIED: Icon */}
-                      View Courses {/* MODIFIED: Text */}
+                      <BookOpen className="h-3 w-3 inline mr-1" /> 
+                      View Courses 
                     </button>
                   </div>
                 </div>
@@ -325,7 +318,6 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        {/* Recent Assignments */}
         <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 dark:border-gray-700/50 p-6 animate-fade-in">
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-3">
             <FileText className="h-6 w-6 text-edusync-warning" />
@@ -386,7 +378,6 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      {/* Announcement Modal */}
       {selectedAnnouncement && (
         <AnnouncementModal
           isOpen={isAnnouncementModalOpen}
@@ -395,7 +386,6 @@ export default function StudentDashboard() {
         />
       )}
 
-      {/* Submit Assignment Modal */}
       {selectedAssignmentForSubmission && (
         <SubmitAssignmentModal
           isOpen={isSubmitModalOpen}

@@ -54,11 +54,9 @@ export default function InstructorGroups() {
 
       const headers = { Authorization: `Bearer ${token}` };
       
-      // Fetch schedule data
       const scheduleResponse = await api.get(`/api/CourseSchedule/instructor/${instructorId}`, { headers });
       setSchedule(scheduleResponse.data);
       
-      // Transform schedule to groups
       const groupsData = scheduleResponse.data.map((item: any, index: number) => ({
         id: item.groupId || `group-${index}`,
         label: `${item.subject} Group`,
@@ -68,7 +66,7 @@ export default function InstructorGroups() {
         courseCredits: 3,
         courseLevel: 1,
         instructorId: instructorId,
-        enrolledStudentsCount: 25, // Default value
+        enrolledStudentsCount: 25, 
         startTime: item.date,
         location: item.room || 'N/A'
       }));
@@ -123,7 +121,6 @@ export default function InstructorGroups() {
           <TabsTrigger value="schedule">Schedule View</TabsTrigger>
         </TabsList>
 
-        {/* Cards View */}
         <TabsContent value="cards">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {groups.map((group, index) => {
@@ -195,7 +192,6 @@ export default function InstructorGroups() {
           )}
         </TabsContent>
 
-        {/* Schedule View */}
         <TabsContent value="schedule">
           <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 dark:border-gray-700/50 p-6">
             <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
@@ -245,7 +241,6 @@ export default function InstructorGroups() {
         </TabsContent>
       </Tabs>
 
-      {/* Materials Modal */}
       {selectedMaterialGroup && (
         <MaterialsModal
           isOpen={isMaterialsModalOpen}
@@ -255,14 +250,12 @@ export default function InstructorGroups() {
         />
       )}
 
-      {/* Add Material Modal */}
       {selectedMaterialGroup && (
         <AddMaterialModal
           isOpen={isAddMaterialModalOpen}
           onClose={() => setIsAddMaterialModalOpen(false)}
           groupId={selectedMaterialGroup.groupId}
           onMaterialAdded={() => {
-            // Refresh materials when new one is added
             setIsAddMaterialModalOpen(false);
           }}
         />

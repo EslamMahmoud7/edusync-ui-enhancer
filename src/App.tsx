@@ -51,10 +51,8 @@ const App = () => (
                 <Route path="/login" element={<Login />} />
                 <Route element={<PrivateRoute />}>
                   <Route path="/" element={<Layout />}>
-                    {/* Legacy route - redirect to appropriate dashboard */}
                     <Route index element={<Index />} />
                     
-                    {/* Student routes */}
                     <Route path="student-dashboard" element={
                       <RoleGuard allowedRoles={[0, 1]}>
                         <StudentDashboard />
@@ -86,7 +84,6 @@ const App = () => (
                       </RoleGuard>
                     } />
 
-                    {/* Admin routes */}
                     <Route path="admin-dashboard" element={
                       <RoleGuard allowedRoles={[2]}>
                         <AdminDashboard />
@@ -113,7 +110,6 @@ const App = () => (
                       </RoleGuard>
                     } />
 
-                    {/* Instructor routes */}
                     <Route path="instructor-dashboard" element={
                       <RoleGuard allowedRoles={[3]}>
                         <InstructorDashboard />

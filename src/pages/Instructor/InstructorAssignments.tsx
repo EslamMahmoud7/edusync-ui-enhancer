@@ -49,7 +49,6 @@ export default function InstructorAssignments() {
       const headers = { Authorization: `Bearer ${token}` };
       const response = await api.get(`/api/CourseSchedule/instructor/${instructorId}`, { headers });
       
-      // Transform the schedule data to match our group interface
       const groupsData = response.data.map((item: any) => ({
         id: item.groupId || item.id,
         label: item.groupLabel || `${item.subject} Group`,
@@ -206,7 +205,6 @@ export default function InstructorAssignments() {
         </div>
       </div>
 
-      {/* Create Assignment Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>

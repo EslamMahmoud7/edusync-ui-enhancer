@@ -8,23 +8,23 @@ import {
     AcademicRecordDTO, 
     AssessmentType, 
     AcademicRecordStatus, 
-    UploadAcademicRecordsCsvDTO, // For type hinting form state
+    UploadAcademicRecordsCsvDTO, 
     BulkAddAcademicRecordsResultDTO,
-    UpdateAcademicRecordDTO, // For editing modal
-    // CreateAcademicRecordDTO // If modal still supports creating
+    UpdateAcademicRecordDTO, 
+    
 } from '../../types/academic';
 import { GroupDTO } from '../../types/group';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import SearchInput from '../../components/SearchInput';
-import AcademicRecordModal from '../../components/AcademicRecordModal'; // Assuming this modal now primarily handles edits
+import AcademicRecordModal from '../../components/AcademicRecordModal'; 
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { useAuth } from '../../Context/useAuth'; // To get uploader's ID
+import { useAuth } from '../../Context/useAuth'; 
 
 
 export default function AcademicRecordsPage() {
-  const { user } = useAuth(); // Assuming this hook provides the logged-in user's ID
+  const { user } = useAuth(); 
   const [records, setRecords] = useState<AcademicRecordDTO[]>([]);
   const [filteredRecords, setFilteredRecords] = useState<AcademicRecordDTO[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,11 +33,10 @@ export default function AcademicRecordsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
 
-  // States for CSV Upload
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [term, setTerm] = useState<string>('');
-  const [selectedAssessmentType, setSelectedAssessmentType] = useState<string>(''); // Store as string for Select component
+  const [selectedAssessmentType, setSelectedAssessmentType] = useState<string>('');
   const [groups, setGroups] = useState<GroupDTO[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<BulkAddAcademicRecordsResultDTO | null>(null);
@@ -71,8 +70,8 @@ export default function AcademicRecordsPage() {
     }
   };
   
-  const fetchRecords = async () => { // Renamed from fetchPageData if only records are re-fetched
-    setLoading(true); // Or a different loading state for just the table
+  const fetchRecords = async () => { 
+    setLoading(true); 
     try {
       const data = await academicRecordsService.getAll();
       setRecords(data);
@@ -109,7 +108,7 @@ export default function AcademicRecordsPage() {
     try {
       await academicRecordsService.delete(id);
       toast({ title: "Success", description: "Academic record deleted successfully" });
-      fetchRecords(); // Refresh list
+      fetchRecords(); 
     } catch (error) {
       console.error('Failed to delete record:', error);
       toast({ title: "Error", description: "Failed to delete academic record", variant: "destructive" });
@@ -124,7 +123,7 @@ export default function AcademicRecordsPage() {
   const handleModalClose = () => {
     setIsModalOpen(false);
     setEditingRecord(null);
-    fetchRecords(); // Refresh list after modal closes (assuming save/update happens in modal)
+    fetchRecords(); 
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -148,7 +147,7 @@ export default function AcademicRecordsPage() {
     formData.append('CsvFile', csvFile);
     formData.append('GroupId', selectedGroupId);
     formData.append('Term', term);
-    formData.append('AssessmentType', selectedAssessmentType); // Send as string, backend parses to enum
+    formData.append('AssessmentType', selectedAssessmentType);
     if (user?.id) {
       formData.append('UploadingInstructorId', user.id);
     }
@@ -162,7 +161,7 @@ export default function AcademicRecordsPage() {
         description: `${result.successfullyAddedCount} of ${result.totalRowsAttempted} records added.`,
       });
       if (result.successfullyAddedCount > 0) {
-        fetchRecords(); // Refresh records list if some were added
+        fetchRecords(); 
       }
     } catch (error: any) {
       console.error('CSV Upload failed:', error);
@@ -180,7 +179,7 @@ export default function AcademicRecordsPage() {
   };
 
   const getStatusLabel = (status: AcademicRecordStatus) => {
-    return AcademicRecordStatus[status] || 'Unknown'; // E.g., AcademicRecordStatus[0] -> "Provisional"
+    return AcademicRecordStatus[status] || 'Unknown';
   };
 
   const getStatusColor = (status: AcademicRecordStatus) => {
@@ -199,7 +198,7 @@ export default function AcademicRecordsPage() {
     return 'text-red-600 dark:text-red-400';
   };
 
-  if (loading && records.length === 0 && groups.length === 0) { // Show main loader only on initial load
+  if (loading && records.length === 0 && groups.length === 0) { 
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-edusync-primary"></div>
@@ -275,7 +274,7 @@ export default function AcademicRecordsPage() {
                 </div>
               </div>
               {uploadResult.errorMessages.length > 0 && (
-                <div className="mt-2 pl-7"> {/* Indent errors under summary */}
+                <div className="mt-2 pl-7"> 
                   <p className="font-medium">Details:</p>
                   <ul className="list-disc list-inside max-h-28 overflow-y-auto text-xs">
                     {uploadResult.errorMessages.map((err, index) => (
@@ -370,8 +369,7 @@ export default function AcademicRecordsPage() {
           isOpen={isModalOpen}
           onClose={handleModalClose}
           record={editingRecord}
-          // You'll need to pass other necessary props to the modal, e.g., lists of students/groups for dropdowns if the modal edits these.
-          // For now, assuming it primarily handles grade, assessment type, term, status for an existing record.
+
         />
       )}
     </div>

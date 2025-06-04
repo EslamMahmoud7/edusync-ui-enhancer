@@ -33,25 +33,21 @@ export interface UpdateMaterialDTO {
 }
 
 export const materialService = {
-  // Get materials by group ID
   getByGroupId: async (groupId: string): Promise<MaterialDTO[]> => {
     const response = await api.get(`/api/material/group/${groupId}`);
     return response.data;
   },
 
-  // Create new material
   create: async (data: CreateMaterialDTO): Promise<MaterialDTO> => {
     const response = await api.post('/api/material', data);
     return response.data;
   },
 
-  // Update material
   update: async (materialId: string, data: UpdateMaterialDTO): Promise<MaterialDTO> => {
     const response = await api.put(`/api/material/${materialId}`, data);
     return response.data;
   },
 
-  // Delete material
   delete: async (materialId: string): Promise<void> => {
     await api.delete(`/api/material/${materialId}`);
   }

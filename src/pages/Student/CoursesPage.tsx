@@ -59,36 +59,31 @@ export default function CoursesPage() {
       const { id: studentId, token } = JSON.parse(stored);
       const headers = { Authorization: `Bearer ${token}` };
 
-      // Fetch data using the new API structure
       const response = await api.get<ApiScheduleItemGroup[]>(
-        `/api/CourseSchedule/student/${studentId}`, // Assuming this is still the correct endpoint
+        `/api/CourseSchedule/student/${studentId}`, 
         { headers }
       );
 
       console.log("Raw API response for CoursesPage:", JSON.stringify(response.data, null, 2));
 
-      // Transform the API data to match GroupWithCourse interface
       const transformedGroups: GroupWithCourse[] = response.data.map((item, index) => {
-        // --- CRITICAL: Provide sensible defaults for missing course-specific data ---
-        // The BEST solution is for the API to return these.
-        const a_courseId = `COURSE_ID_FOR_${item.subject.replace(/\s+/g, '_')}_${index}`; // Placeholder
-        const a_courseDescription = `Detailed description for ${item.subject}.`; // Placeholder
-        const a_courseCredits = 3; // Default placeholder
-        const a_courseLevel = 1; // Default placeholder
+
+        const a_courseId = `COURSE_ID_FOR_${item.subject.replace(/\s+/g, '_')}_${index}`; 
+        const a_courseDescription = `Detailed description for ${item.subject}.`;
+        const a_courseCredits = 3; 
+        const a_courseLevel = 1; 
 
         return {
-          id: item.groupId, // Use groupId from API as the unique ID for this group/session
-          label: `${item.subject} Group (${item.day} at ${item.time})`, // Create a descriptive label
+          id: item.groupId,
+          label: `${item.subject} Group (${item.day} at ${item.time})`,
           
-          // --- Course Specific Details ---
-          courseId: a_courseId, // Using placeholder
+          courseId: a_courseId, 
           courseTitle: item.subject,
-          courseDescription: a_courseDescription, // Using placeholder
-          courseCredits: a_courseCredits, // Using placeholder
-          courseLevel: a_courseLevel, // Using placeholder
+          courseDescription: a_courseDescription, 
+          courseCredits: a_courseCredits,
+          courseLevel: a_courseLevel,
           
-          // --- Group/Session Specific Details ---
-          startTime: item.date, // API 'date' field is the start time
+          startTime: item.date, 
           location: item.room || "N/A",
         };
       });
@@ -110,8 +105,6 @@ export default function CoursesPage() {
   };
 
   const handleViewResources = (groupId: string, courseTitle: string) => {
-    // Note: The 'groupId' here is the specific session's ID (from apiItem.groupId)
-    // If MaterialsModal needs a general course ID, you might need to pass group.courseId
     setSelectedMaterialGroup({ groupId, courseTitle });
     setIsMaterialsModalOpen(true);
   };
@@ -194,17 +187,17 @@ export default function CoursesPage() {
                 </div>
                 <div className="flex flex-col gap-1">
                   <Badge variant="secondary">
-                    Level {group.courseLevel} {/* This will show the default value */}
+                    Level {group.courseLevel} 
                   </Badge>
                   <Badge variant="outline">
-                    {group.courseCredits} Credits {/* This will show the default value */}
+                    {group.courseCredits} Credits 
                   </Badge>
                 </div>
               </div>
 
               {group.courseDescription && (
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
-                  {group.courseDescription} {/* This will show the default value */}
+                  {group.courseDescription}
                 </p>
               )}
 
@@ -249,7 +242,7 @@ export default function CoursesPage() {
         <MaterialsModal
           isOpen={isMaterialsModalOpen}
           onClose={() => setIsMaterialsModalOpen(false)}
-          groupId={selectedMaterialGroup.groupId} // This is the group/session ID
+          groupId={selectedMaterialGroup.groupId} 
           courseTitle={selectedMaterialGroup.courseTitle}
         />
       )}

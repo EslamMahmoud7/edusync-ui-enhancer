@@ -27,19 +27,16 @@ export interface GradeSubmittedAssignmentDTO {
 }
 
 export const submittedAssignmentService = {
-  // Submit assignment
   submit: async (data: SubmitAssignmentDTO): Promise<SubmittedAssignmentDTO> => {
     const response = await api.post('/api/SubmittedAssignments/submit', data);
     return response.data;
   },
 
-  // Get submissions for instructor
   getForInstructor: async (instructorId: string): Promise<SubmittedAssignmentDTO[]> => {
     const response = await api.get(`/api/SubmittedAssignments/instructor/${instructorId}`);
     return response.data;
   },
 
-  // Get submissions for student
   getForStudent: async (studentId: string, assignmentId?: string): Promise<SubmittedAssignmentDTO[]> => {
     const url = `/api/SubmittedAssignments/student/${studentId}`;
     const params = assignmentId ? { assignmentId } : {};
@@ -47,13 +44,11 @@ export const submittedAssignmentService = {
     return response.data;
   },
 
-  // Grade submission
   grade: async (submissionId: string, data: GradeSubmittedAssignmentDTO): Promise<SubmittedAssignmentDTO> => {
     const response = await api.put(`/api/SubmittedAssignments/${submissionId}/grade`, data);
     return response.data;
   },
 
-  // Get submission by ID
   getById: async (id: string): Promise<SubmittedAssignmentDTO> => {
     const response = await api.get(`/api/SubmittedAssignments/${id}`);
     return response.data;

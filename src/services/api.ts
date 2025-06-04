@@ -1,16 +1,13 @@
 
 import axios from 'axios';
 
-// Create axios instance
 const api = axios.create({
   baseURL: "http://localhost:5252",
   timeout: 10000,
 });
 
-// Add request interceptor to include JWT token
 api.interceptors.request.use(
   (config) => {
-    // Get token from localStorage - FIX: Parse the user object first
     const userString = localStorage.getItem('eduSyncUser');
     let token = null;
     
@@ -41,7 +38,6 @@ api.interceptors.request.use(
   }
 );
 
-// Add response interceptor for debugging
 api.interceptors.response.use(
   (response) => {
     console.log('API Response:', {

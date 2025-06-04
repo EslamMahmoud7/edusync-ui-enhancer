@@ -14,7 +14,6 @@ import type {
 } from '../types/quiz';
 
 export const quizService = {
-  // Instructor endpoints
   getInstructorQuizzes: async (instructorId: string): Promise<QuizDTO[]> => {
     const response = await api.get(`/api/quiz/instructor/${instructorId}/my-quizzes`);
     return response.data;
@@ -63,7 +62,6 @@ export const quizService = {
     return response.data;
   },
 
-  // Student endpoints
   getAvailableQuizzes: async (studentId: string): Promise<StudentQuizListItemDTO[]> => {
     const response = await api.get(`/api/quiz/student/${studentId}/available`);
     return response.data;

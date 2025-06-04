@@ -68,7 +68,6 @@ export default function InstructorDashboard() {
     );
   }
 
-  // Fallback to zeros if counts is somehow null
   const {
     totalGroups = 0,
     totalStudents = 0,

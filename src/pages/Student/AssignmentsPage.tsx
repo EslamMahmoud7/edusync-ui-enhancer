@@ -20,25 +20,23 @@ const fetchAssignments = async (): Promise<Assignment[]> => {
 
   const { data } = await api.get<
     Array<{
-      id: string; // Ensure id is returned from API
+      id: string; 
       title: string;
       description: string;
       dueDate: string;
       courseTitle: string;
-      // Add more fields if your API returns submission status or grade
-      // For now, we'll assume they start as Pending and update on client-side
+
     }>
   >(`/api/assignment/student/${studentId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
   return data.map((a) => ({
-    id: a.id, // Use the actual ID from the API
+    id: a.id,
     title: a.title,
     course: a.courseTitle,
     dueDate: new Date(a.dueDate).toLocaleDateString(),
-    status: "Pending", // Initialize as Pending, will be updated on submission
-    // You might fetch actual submission status and grade from your API here
+    status: "Pending", 
   }));
 };
 
@@ -84,7 +82,6 @@ export default function AssignmentsPage() {
   };
 
   const handleSubmitSuccess = (submittedAssignmentId: string) => {
-    // Update the assignment status in the assignments state
     setAssignments((prevAssignments) =>
       prevAssignments.map((assignment) =>
         assignment.id === submittedAssignmentId
@@ -92,7 +89,6 @@ export default function AssignmentsPage() {
           : assignment
       )
     );
-    // Close the modal
     setIsSubmitModalOpen(false);
     setAssignmentToSubmit(null);
   };
@@ -126,7 +122,6 @@ export default function AssignmentsPage() {
         </div>
       </div>
 
-      {/* Filters & Search */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="flex flex-wrap gap-3">
           {(["All", "Pending", "Submitted", "Graded"] as const).map((status, index) => (
@@ -162,7 +157,6 @@ export default function AssignmentsPage() {
         </div>
       </div>
 
-      {/* Assignment Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {filtered.map((assignment, index) => {
           const getStatusConfig = (status: string) => {
@@ -210,7 +204,6 @@ export default function AssignmentsPage() {
                 <FileText className="w-5 h-5 text-gray-400 group-hover:text-edusync-primary transition-colors duration-200" />
               </div>
 
-              {/* Assignment Info */}
               <div className="space-y-3 mb-6">
                 <h3 className="font-bold text-gray-800 text-lg leading-tight group-hover:text-edusync-primary transition-colors duration-200">
                   {assignment.title}
@@ -248,7 +241,6 @@ export default function AssignmentsPage() {
                 )}
               </div>
 
-              {/* Action Button */}
               <button
                 onClick={() => {
                   if (assignment.status === "Pending") {
@@ -281,7 +273,6 @@ export default function AssignmentsPage() {
         </div>
       )}
 
-      {/* View Details Modal (your existing modal) */}
       {selected && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-glass p-6 w-full max-w-md animate-scale-in">
@@ -330,7 +321,6 @@ export default function AssignmentsPage() {
         </div>
       )}
 
-      {/* Submit Assignment Modal */}
       {isSubmitModalOpen && assignmentToSubmit && (
         <SubmitAssignmentModal
           isOpen={isSubmitModalOpen}
