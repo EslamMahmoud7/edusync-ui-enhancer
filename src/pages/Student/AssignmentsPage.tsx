@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { Search, FileText, Calendar, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import api from "../../services/api";
+import SubmitAssignmentModal from "../../components/SubmitAssignmentModal";
 
 interface Assignment {
   id: string;
@@ -20,21 +20,25 @@ const fetchAssignments = async (): Promise<Assignment[]> => {
 
   const { data } = await api.get<
     Array<{
+      id: string; // Ensure id is returned from API
       title: string;
       description: string;
       dueDate: string;
       courseTitle: string;
+      // Add more fields if your API returns submission status or grade
+      // For now, we'll assume they start as Pending and update on client-side
     }>
   >(`/api/assignment/student/${studentId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
-  return data.map((a, idx) => ({
-    id: `${idx}`,
+  return data.map((a) => ({
+    id: a.id, // Use the actual ID from the API
     title: a.title,
     course: a.courseTitle,
     dueDate: new Date(a.dueDate).toLocaleDateString(),
-    status: "Pending",
+    status: "Pending", // Initialize as Pending, will be updated on submission
+    // You might fetch actual submission status and grade from your API here
   }));
 };
 
@@ -45,6 +49,10 @@ export default function AssignmentsPage() {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [selected, setSelected] = useState<Assignment | null>(null);
+
+  // State for the submission modal
+  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+  const [assignmentToSubmit, setAssignmentToSubmit] = useState<{ id: string; title: string } | null>(null);
 
   useEffect(() => {
     fetchAssignments()
@@ -69,6 +77,25 @@ export default function AssignmentsPage() {
     }
     setFiltered(data);
   }, [assignments, filterStatus, searchTerm]);
+
+  const handleOpenSubmitModal = (assignment: Assignment) => {
+    setAssignmentToSubmit({ id: assignment.id, title: assignment.title });
+    setIsSubmitModalOpen(true);
+  };
+
+  const handleSubmitSuccess = (submittedAssignmentId: string) => {
+    // Update the assignment status in the assignments state
+    setAssignments((prevAssignments) =>
+      prevAssignments.map((assignment) =>
+        assignment.id === submittedAssignmentId
+          ? { ...assignment, status: "Submitted", submissionDate: new Date().toLocaleDateString() }
+          : assignment
+      )
+    );
+    // Close the modal
+    setIsSubmitModalOpen(false);
+    setAssignmentToSubmit(null);
+  };
 
   if (loading) {
     return (
@@ -188,7 +215,7 @@ export default function AssignmentsPage() {
                 <h3 className="font-bold text-gray-800 text-lg leading-tight group-hover:text-edusync-primary transition-colors duration-200">
                   {assignment.title}
                 </h3>
-                
+
                 <div className="flex items-center gap-2 text-gray-600">
                   <div className="w-6 h-6 bg-edusync-primary/10 rounded-full flex items-center justify-center">
                     <FileText className="w-3 h-3 text-edusync-primary" />
@@ -223,7 +250,13 @@ export default function AssignmentsPage() {
 
               {/* Action Button */}
               <button
-                onClick={() => setSelected(assignment)}
+                onClick={() => {
+                  if (assignment.status === "Pending") {
+                    handleOpenSubmitModal(assignment);
+                  } else {
+                    setSelected(assignment);
+                  }
+                }}
                 className="w-full py-3 bg-gradient-to-r from-edusync-primary to-edusync-secondary text-white rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105 font-medium"
               >
                 {assignment.status === "Pending"
@@ -248,25 +281,25 @@ export default function AssignmentsPage() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* View Details Modal (your existing modal) */}
       {selected && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-glass p-6 w-full max-w-md animate-scale-in">
             <h2 className="text-xl font-bold text-edusync-primary mb-4">
               {selected.status === "Graded" ? "Grade Details" : "Assignment Details"}
             </h2>
-            
+
             <div className="space-y-4 mb-6">
               <div>
                 <p className="text-sm text-gray-500">Title</p>
                 <p className="font-medium text-gray-800">{selected.title}</p>
               </div>
-              
+
               <div>
                 <p className="text-sm text-gray-500">Course</p>
                 <p className="font-medium text-gray-800">{selected.course}</p>
               </div>
-              
+
               <div>
                 <p className="text-sm text-gray-500">Due Date</p>
                 <p className="font-medium text-gray-800">{selected.dueDate}</p>
@@ -295,6 +328,17 @@ export default function AssignmentsPage() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Submit Assignment Modal */}
+      {isSubmitModalOpen && assignmentToSubmit && (
+        <SubmitAssignmentModal
+          isOpen={isSubmitModalOpen}
+          onClose={() => setIsSubmitModalOpen(false)}
+          assignmentId={assignmentToSubmit.id}
+          assignmentTitle={assignmentToSubmit.title}
+          onSubmitSuccess={() => handleSubmitSuccess(assignmentToSubmit.id)}
+        />
       )}
     </div>
   );
