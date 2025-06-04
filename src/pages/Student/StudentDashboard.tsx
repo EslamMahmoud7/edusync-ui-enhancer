@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import {
   BookOpen,
@@ -7,7 +8,8 @@ import {
   Award,
   Calendar,
   Users,
-  ExternalLink, // Kept in case it's used elsewhere or by other components
+  ExternalLink,
+  Upload, // Add missing Upload import
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../Context/useAuth";

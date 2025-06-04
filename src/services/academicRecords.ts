@@ -1,43 +1,50 @@
 
-import apiClient from './api';
-import type { 
-  AcademicRecordDTO, 
-  UpdateAcademicRecordDTO,
-  UploadAcademicRecordsCsvDTO,
-  BulkAddAcademicRecordsResultDTO 
-} from '../types/academic';
+import api from './api';
+import { AcademicRecordDTO, CreateAcademicRecordDTO, UpdateAcademicRecordDTO } from '../types/academic';
 
 export const academicRecordsService = {
-getAll: async (): Promise<AcademicRecordDTO[]> => {
-  const response = await apiClient.get('/api/AcademicRecord');
-  return response.data;
-},
+  // Get all academic records
+  getAll: async (): Promise<AcademicRecordDTO[]> => {
+    const response = await api.get('/api/AcademicRecords');
+    return response.data;
+  },
 
-getByGroup: async (groupId: string): Promise<AcademicRecordDTO[]> => {
-  const response = await apiClient.get(`/api/academicrecord/group/${groupId}`);
-  return response.data;
-},
+  // Get academic records by group
+  getByGroup: async (groupId: string): Promise<AcademicRecordDTO[]> => {
+    const response = await api.get(`/api/AcademicRecords/group/${groupId}`);
+    return response.data;
+  },
 
-getByStudent: async (studentId: string): Promise<AcademicRecordDTO[]> => {
-  const response = await apiClient.get(`/api/academicrecord/student/${studentId}`);
-  return response.data;
-},
+  // Get academic records by student
+  getByStudent: async (studentId: string): Promise<AcademicRecordDTO[]> => {
+    const response = await api.get(`/api/AcademicRecords/student/${studentId}`);
+    return response.data;
+  },
 
-addFromCsv: async (formData: FormData): Promise<BulkAddAcademicRecordsResultDTO> => {
-  const response = await apiClient.post('/api/academicrecord/bulk-upload-csv', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-  return response.data;
-},
+  // Create new academic record
+  create: async (data: CreateAcademicRecordDTO): Promise<AcademicRecordDTO> => {
+    const response = await api.post('/api/AcademicRecords', data);
+    return response.data;
+  },
 
-update: async (id: string, data: UpdateAcademicRecordDTO): Promise<AcademicRecordDTO> => {
-  const response = await apiClient.put(`/api/academicrecord/${id}`, data);
-  return response.data;
-},
+  // Add academic records from CSV
+  addFromCsv: async (formData: FormData): Promise<{ message: string; recordsAdded: number }> => {
+    const response = await api.post('/api/AcademicRecords/upload-csv', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
 
-delete: async (id: string): Promise<void> => {
-  await apiClient.delete(`/api/academicrecord/${id}`);
-}
+  // Update academic record
+  update: async (id: string, data: UpdateAcademicRecordDTO): Promise<AcademicRecordDTO> => {
+    const response = await api.put(`/api/AcademicRecords/${id}`, data);
+    return response.data;
+  },
+
+  // Delete academic record
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/api/AcademicRecords/${id}`);
+  }
 };
