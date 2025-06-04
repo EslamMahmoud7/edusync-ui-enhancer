@@ -19,7 +19,7 @@ export default function AddMaterialModal({ isOpen, onClose, groupId, onMaterialA
     title: '',
     description: '',
     fileUrl: '',
-    type: 0, // 0: Document, 1: Video, 2: Other
+    type: 0,
   });
   const [loading, setLoading] = useState(false);
 

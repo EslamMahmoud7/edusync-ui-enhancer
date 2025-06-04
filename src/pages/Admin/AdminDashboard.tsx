@@ -293,7 +293,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* System Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 dark:border-gray-700/50 p-6">
           <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
