@@ -4,7 +4,7 @@ import { GraduationCap, Filter } from 'lucide-react';
 import { useAuth } from '../../Context/useAuth';
 import { useToast } from '../../hooks/use-toast';
 import { academicRecordsService } from '../../services/academicRecords';
-import { AcademicRecordDTO, AssessmentType, AcademicRecordStatus } from '../../types/academic';
+import { AcademicRecordDTO, AcademicRecordStatus } from '../../types/academic';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import SearchInput from '../../components/SearchInput';
 
@@ -54,13 +54,9 @@ export default function StudentAcademicRecords() {
     const filtered = records.filter(record => 
       record.courseTitle.toLowerCase().includes(query) ||
       record.groupLabel.toLowerCase().includes(query) ||
-      record.term.toLowerCase().includes(query)
+      (record.term && record.term.toLowerCase().includes(query))
     );
     setFilteredRecords(filtered);
-  };
-
-  const getAssessmentTypeLabel = (type: AssessmentType) => {
-    return Object.keys(AssessmentType)[type] || 'Unknown';
   };
 
   const getStatusLabel = (status: AcademicRecordStatus) => {
@@ -170,8 +166,6 @@ export default function StudentAcademicRecords() {
                     </span>
                   </TableCell>
                   <TableCell>{record.term}</TableCell>
-                
-                  
                 </TableRow>
               ))}
             </TableBody>

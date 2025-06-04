@@ -190,7 +190,7 @@ export default function AcademicRecordModal({ isOpen, onClose, record }: Academi
 
           <div className="space-y-2">
             <Label htmlFor="assessmentType">Assessment Type</Label>
-            <Select value={formData.assessmentType.toString()} onValueChange={(value) => setFormData({...formData, assessmentType: Number(value)})}>
+            <Select value={formData.assessmentType.toString()} onValueChange={(value) => setFormData({...formData, assessmentType: Number(value) as AssessmentType})}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -217,7 +217,7 @@ export default function AcademicRecordModal({ isOpen, onClose, record }: Academi
 
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
-            <Select value={formData.status.toString()} onValueChange={(value) => setFormData({...formData, status: Number(value)})}>
+            <Select value={formData.status.toString()} onValueChange={(value) => setFormData({...formData, status: Number(value) as AcademicRecordStatus})}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
