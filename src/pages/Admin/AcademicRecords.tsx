@@ -1,78 +1,45 @@
-import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
-import { Edit, Trash2, Filter, UploadCloud, ListChecks, AlertCircle } from 'lucide-react';
-import { Button } from '../../components/ui/button';
+import { useState, useEffect } from 'react';
+import { GraduationCap, Upload, Download, Plus, Filter, Trash2, Edit } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '../../hooks/use-toast';
 import { academicRecordsService } from '../../services/academicRecords';
 import { groupService } from '../../services/group';
-import { 
-    AcademicRecordDTO, 
-    AssessmentType, 
-    AcademicRecordStatus, 
-    UploadAcademicRecordsCsvDTO, // For type hinting form state
-    BulkAddAcademicRecordsResultDTO,
-    UpdateAcademicRecordDTO, // For editing modal
-    // CreateAcademicRecordDTO // If modal still supports creating
-} from '../../types/academic';
+import { AcademicRecordDTO, CreateAcademicRecordDTO, BulkAddAcademicRecordsResultDTO, AcademicRecordStatus, AssessmentType } from '../../types/academic';
 import { GroupDTO } from '../../types/group';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
+import AcademicRecordModal from '../../components/AcademicRecordModal';
 import SearchInput from '../../components/SearchInput';
-import AcademicRecordModal from '../../components/AcademicRecordModal'; // Assuming this modal now primarily handles edits
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Input } from '../../components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { useAuth } from '../../Context/useAuth'; // To get uploader's ID
 
-
-export default function AcademicRecordsPage() {
-  const { user } = useAuth(); // Assuming this hook provides the logged-in user's ID
+export default function AdminAcademicRecords() {
   const [records, setRecords] = useState<AcademicRecordDTO[]>([]);
   const [filteredRecords, setFilteredRecords] = useState<AcademicRecordDTO[]>([]);
+  const [groups, setGroups] = useState<GroupDTO[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingRecord, setEditingRecord] = useState<AcademicRecordDTO | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkResult, setBulkResult] = useState<BulkAddAcademicRecordsResultDTO | null>(null);
+  const [editingRecord, setEditingRecord] = useState<AcademicRecordDTO | null>(null);
   const { toast } = useToast();
 
-  // States for CSV Upload
-  const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
-  const [term, setTerm] = useState<string>('');
-  const [selectedAssessmentType, setSelectedAssessmentType] = useState<string>(''); // Store as string for Select component
-  const [groups, setGroups] = useState<GroupDTO[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadResult, setUploadResult] = useState<BulkAddAcademicRecordsResultDTO | null>(null);
-
   useEffect(() => {
-    fetchPageData();
+    fetchRecords();
+    fetchGroups();
   }, []);
 
   useEffect(() => {
     filterRecords();
-  }, [records, searchQuery]);
+  }, [records, searchQuery, selectedStatus, selectedGroup]);
 
-  const fetchPageData = async () => {
+  const fetchRecords = async () => {
     setLoading(true);
-    try {
-      const [recordsData, groupsData] = await Promise.all([
-        academicRecordsService.getAll(),
-        groupService.getAll()
-      ]);
-      setRecords(recordsData);
-      setGroups(groupsData);
-    } catch (error) {
-      console.error('Failed to fetch page data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load academic records or groups list.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const fetchRecords = async () => { // Renamed from fetchPageData if only records are re-fetched
-    setLoading(true); // Or a different loading state for just the table
     try {
       const data = await academicRecordsService.getAll();
       setRecords(data);
@@ -80,7 +47,7 @@ export default function AcademicRecordsPage() {
       console.error('Failed to fetch academic records:', error);
       toast({
         title: "Error",
-        description: "Failed to reload academic records.",
+        description: "Failed to load academic records",
         variant: "destructive"
       });
     } finally {
@@ -88,290 +55,329 @@ export default function AcademicRecordsPage() {
     }
   };
 
+  const fetchGroups = async () => {
+    try {
+      const data = await groupService.getAll();
+      setGroups(data);
+    } catch (error) {
+      console.error('Failed to fetch groups:', error);
+    }
+  };
 
   const filterRecords = () => {
-    if (!searchQuery) {
+    if (!searchQuery && !selectedStatus && !selectedGroup) {
       setFilteredRecords(records);
       return;
     }
+
     const query = searchQuery.toLowerCase();
-    const filtered = records.filter(record =>
-      (record.studentFullName && record.studentFullName.toLowerCase().includes(query)) ||
-      (record.courseTitle && record.courseTitle.toLowerCase().includes(query)) ||
-      (record.groupLabel && record.groupLabel.toLowerCase().includes(query)) ||
-      (record.term && record.term.toLowerCase().includes(query))
-    );
+    const filtered = records.filter(record => {
+      const matchesSearch = !searchQuery || 
+        record.courseTitle.toLowerCase().includes(query) ||
+        record.studentName.toLowerCase().includes(query) ||
+        record.groupLabel.toLowerCase().includes(query);
+      
+      const matchesStatus = !selectedStatus || record.status.toString() === selectedStatus;
+      const matchesGroup = !selectedGroup || record.groupId === selectedGroup;
+      
+      return matchesSearch && matchesStatus && matchesGroup;
+    });
     setFilteredRecords(filtered);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this academic record?')) return;
-    try {
-      await academicRecordsService.delete(id);
-      toast({ title: "Success", description: "Academic record deleted successfully" });
-      fetchRecords(); // Refresh list
-    } catch (error) {
-      console.error('Failed to delete record:', error);
-      toast({ title: "Error", description: "Failed to delete academic record", variant: "destructive" });
-    }
-  };
-
-  const handleEdit = (record: AcademicRecordDTO) => {
-    setEditingRecord(record);
-    setIsModalOpen(true);
-  };
-
-  const handleModalClose = () => {
-    setIsModalOpen(false);
-    setEditingRecord(null);
-    fetchRecords(); // Refresh list after modal closes (assuming save/update happens in modal)
-  };
-
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setCsvFile(event.target.files[0]);
-    } else {
-      setCsvFile(null);
-    }
-  };
-
-  const handleCsvUploadSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!csvFile || !selectedGroupId || !term || selectedAssessmentType === '') {
-      toast({ title: "Missing Fields", description: "Please fill all required fields for CSV upload.", variant: "destructive" });
-      return;
-    }
-    setIsUploading(true);
-    setUploadResult(null);
-
-    const formData = new FormData();
-    formData.append('CsvFile', csvFile);
-    formData.append('GroupId', selectedGroupId);
-    formData.append('Term', term);
-    formData.append('AssessmentType', selectedAssessmentType); // Send as string, backend parses to enum
-    if (user?.id) {
-      formData.append('UploadingInstructorId', user.id);
-    }
-    formData.append('DefaultStatus', AcademicRecordStatus.Final.toString());
-
-    try {
-      const result = await academicRecordsService.addFromCsv(formData);
-      setUploadResult(result);
-      toast({
-        title: "Upload Processed",
-        description: `${result.successfullyAddedCount} of ${result.totalRowsAttempted} records added.`,
-      });
-      if (result.successfullyAddedCount > 0) {
-        fetchRecords(); // Refresh records list if some were added
-      }
-    } catch (error: any) {
-      console.error('CSV Upload failed:', error);
-      const errorMsg = error.response?.data?.errorMessages?.join(', ') || error.response?.data?.title || "CSV upload failed. Please check the file format and data.";
-      setUploadResult({ successfullyAddedCount: 0, totalRowsAttempted: csvFile ? 1 : 0, errorMessages: [errorMsg]});
-      toast({ title: "Upload Error", description: errorMsg, variant: "destructive" });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const getAssessmentTypeLabel = (type: AssessmentType | string) => {
-    const numericType = typeof type === 'string' ? parseInt(type, 10) : type;
-    return Object.keys(AssessmentType).find(key => AssessmentType[key as keyof typeof AssessmentType] === numericType) || 'Unknown';
-  };
-
   const getStatusLabel = (status: AcademicRecordStatus) => {
-    return AcademicRecordStatus[status] || 'Unknown'; // E.g., AcademicRecordStatus[0] -> "Provisional"
+    switch (status) {
+      case AcademicRecordStatus.Pending: return 'Pending';
+      case AcademicRecordStatus.Completed: return 'Completed';
+      case AcademicRecordStatus.Graded: return 'Graded';
+      case AcademicRecordStatus.Provisional: return 'Provisional';
+      case AcademicRecordStatus.Final: return 'Final';
+      default: return 'Unknown';
+    }
   };
 
-  const getStatusColor = (status: AcademicRecordStatus) => {
+  const getStatusVariant = (status: AcademicRecordStatus) => {
     switch (status) {
-      case AcademicRecordStatus.Provisional: return 'text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/30';
-      case AcademicRecordStatus.Final: return 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/30';
-      default: return 'text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-700/30';
+      case AcademicRecordStatus.Pending: return 'yellow';
+      case AcademicRecordStatus.Completed: return 'blue';
+      case AcademicRecordStatus.Graded: return 'green';
+      case AcademicRecordStatus.Provisional: return 'orange';
+      case AcademicRecordStatus.Final: return 'purple';
+      default: return 'default';
+    }
+  };
+
+  const getAssessmentTypeLabel = (type: AssessmentType) => {
+    switch (type) {
+      case AssessmentType.Quiz: return 'Quiz';
+      case AssessmentType.Assignment: return 'Assignment';
+      case AssessmentType.Exam: return 'Exam';
+      case AssessmentType.Project: return 'Project';
+      case AssessmentType.Midterm: return 'Midterm';
+      case AssessmentType.Final: return 'Final';
+      default: return 'Unknown';
     }
   };
 
   const getGradeColor = (grade: number) => {
-    if (grade >= 90) return 'text-green-600 dark:text-green-400';
-    if (grade >= 80) return 'text-blue-600 dark:text-blue-400';
-    if (grade >= 70) return 'text-yellow-600 dark:text-yellow-400';
-    if (grade >= 60) return 'text-orange-600 dark:text-orange-400';
-    return 'text-red-600 dark:text-red-400';
+    if (grade >= 90) return 'text-green-600';
+    if (grade >= 80) return 'text-blue-600';
+    if (grade >= 70) return 'text-yellow-600';
+    if (grade >= 60) return 'text-orange-600';
+    return 'text-red-600';
   };
 
-  if (loading && records.length === 0 && groups.length === 0) { // Show main loader only on initial load
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-edusync-primary"></div>
-      </div>
-    );
-  }
+  const handleEditRecord = (record: AcademicRecordDTO) => {
+    setEditingRecord(record);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteRecord = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this record?')) return;
+    try {
+      await academicRecordsService.delete(id);
+      setRecords(prev => prev.filter(r => r.id !== id));
+      toast({
+        title: "Success",
+        description: "Record deleted successfully",
+      });
+    } catch (error) {
+      console.error('Failed to delete record:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete record",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleBulkUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setBulkUploading(true);
+    try {
+      const result = await academicRecordsService.uploadBulk({ file });
+      setBulkResult({
+        message: result.message,
+        recordsAdded: result.recordsAdded,
+        successfullyAddedCount: result.successfullyAddedCount,
+        totalRowsAttempted: result.totalRowsAttempted
+      });
+      
+      toast({
+        title: "Success",
+        description: `${result.successfullyAddedCount} of ${result.totalRowsAttempted} records uploaded successfully`,
+      });
+      
+      if (result.successfullyAddedCount > 0) {
+        fetchRecords();
+      }
+    } catch (error) {
+      console.error('Bulk upload failed:', error);
+      setBulkResult({
+        message: 'Upload failed',
+        recordsAdded: 0,
+        successfullyAddedCount: 0,
+        totalRowsAttempted: 0
+      });
+      
+      toast({
+        title: "Error",
+        description: "Failed to upload academic records",
+        variant: "destructive"
+      });
+    } finally {
+      setBulkUploading(false);
+    }
+  };
 
   return (
-    <div className="space-y-8 p-4 md:p-6">
-      <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Academic Records Management</h1>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
+          <GraduationCap className="h-8 w-8 text-edusync-primary" />
+          Academic Records Management
+        </h1>
+      </div>
 
-      <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold flex items-center gap-2">
-            <UploadCloud className="h-6 w-6 text-edusync-primary" />
-            Upload Grades via CSV
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleCsvUploadSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
-              <div>
-                <label htmlFor="csvFile" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CSV File*</label>
-                <Input id="csvFile" type="file" accept=".csv" onChange={handleFileChange} required className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
-              </div>
-              <div>
-                <label htmlFor="groupId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Group*</label>
-                <Select value={selectedGroupId} onValueChange={setSelectedGroupId} required>
-                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    <SelectValue placeholder="Select Group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {groups.length > 0 ? groups.map(group => (
-                      <SelectItem key={group.id} value={group.id}>{group.courseTitle}</SelectItem>
-                    )) : <SelectItem value="" disabled>No groups found</SelectItem>}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label htmlFor="term" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Term*</label>
-                <Input id="term" value={term} onChange={(e) => setTerm(e.target.value)} placeholder="e.g., Fall 2024" required  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
-              </div>
-              <div>
-                <label htmlFor="assessmentType" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assessment Type*</label>
-                <Select value={selectedAssessmentType} onValueChange={(value) => setSelectedAssessmentType(value)} required>
-                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    <SelectValue placeholder="Select Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(AssessmentType)
-                        .filter(([, value]) => typeof value === 'number')
-                        .map(([key, value]) => (
-                      <SelectItem key={value as number} value={(value as number).toString()}>{key}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button type="submit" disabled={isUploading || !csvFile} className="bg-edusync-primary hover:bg-edusync-primary/90 w-full md:w-auto lg:col-span-1">
-                {isUploading ? 'Uploading...' : 'Upload Records'}
-              </Button>
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">CSV format: Header row (StudentId,GradeValue), then data rows.</p>
-          </form>
+      <Tabs defaultValue="records" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="records">Records</TabsTrigger>
+          <TabsTrigger value="bulk">Bulk Upload</TabsTrigger>
+        </TabsList>
 
-          {uploadResult && (
-            <div className={`mt-4 p-3 rounded-md text-sm ${uploadResult.errorMessages.length > 0 && uploadResult.successfullyAddedCount === 0 ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300' : (uploadResult.errorMessages.length > 0 ? 'bg-yellow-100 dark:bg-yellow-800/50 text-yellow-700 dark:text-yellow-300' : 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300')}`}>
-              <div className="flex items-start gap-2">
-                 {uploadResult.errorMessages.length > 0 && uploadResult.successfullyAddedCount === 0 ? <AlertCircle className="h-5 w-5 text-red-500" /> : (uploadResult.errorMessages.length > 0 ? <AlertCircle className="h-5 w-5 text-yellow-500" /> :  <ListChecks className="h-5 w-5 text-green-500" />)}
+        <TabsContent value="records">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
                 <div>
-                    <h4 className="font-semibold mb-1">Upload Summary:</h4>
-                    <p>Attempted to process: {uploadResult.totalRowsAttempted} records.</p>
-                    <p>Successfully added: {uploadResult.successfullyAddedCount} records.</p>
+                  <CardTitle>Academic Records</CardTitle>
+                  <CardDescription>Manage student academic records and grades</CardDescription>
                 </div>
+                <Button onClick={() => setIsModalOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Record
+                </Button>
               </div>
-              {uploadResult.errorMessages.length > 0 && (
-                <div className="mt-2 pl-7"> {/* Indent errors under summary */}
-                  <p className="font-medium">Details:</p>
-                  <ul className="list-disc list-inside max-h-28 overflow-y-auto text-xs">
-                    {uploadResult.errorMessages.map((err, index) => (
-                      <li key={index}>{err}</li>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col md:flex-row md:items-center md:gap-4 mb-4">
+                <SearchInput
+                  placeholder="Search by student, course, or group..."
+                  onSearch={setSearchQuery}
+                  className="flex-1 mb-2 md:mb-0"
+                />
+                <Select
+                  value={selectedStatus || ''}
+                  onValueChange={(value) => setSelectedStatus(value || null)}
+                  className="w-48"
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Statuses</SelectItem>
+                    <SelectItem value={AcademicRecordStatus.Pending.toString()}>Pending</SelectItem>
+                    <SelectItem value={AcademicRecordStatus.Completed.toString()}>Completed</SelectItem>
+                    <SelectItem value={AcademicRecordStatus.Graded.toString()}>Graded</SelectItem>
+                    <SelectItem value={AcademicRecordStatus.Provisional.toString()}>Provisional</SelectItem>
+                    <SelectItem value={AcademicRecordStatus.Final.toString()}>Final</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={selectedGroup || ''}
+                  onValueChange={(value) => setSelectedGroup(value || null)}
+                  className="w-48"
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by Group" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Groups</SelectItem>
+                    {groups.map(group => (
+                      <SelectItem key={group.id} value={group.id}>{group.label}</SelectItem>
                     ))}
-                  </ul>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student</TableHead>
+                      <TableHead>Course</TableHead>
+                      <TableHead>Group</TableHead>
+                      <TableHead>Grade</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Assessment</TableHead>
+                      <TableHead>Term</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredRecords.map((record) => (
+                      <TableRow key={record.id}>
+                        <TableCell className="font-medium">{record.studentName}</TableCell>
+                        <TableCell>{record.courseTitle}</TableCell>
+                        <TableCell>{record.groupLabel}</TableCell>
+                        <TableCell>
+                          <span className={`font-semibold ${getGradeColor(record.gradeValue)}`}>
+                            {record.gradeValue}%
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusVariant(record.status)}>
+                            {getStatusLabel(record.status)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{getAssessmentTypeLabel(record.assessmentType)}</TableCell>
+                        <TableCell>{record.term}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditRecord(record)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteRecord(record.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+
+                {filteredRecords.length === 0 && (
+                  <div className="text-center py-8">
+                    <GraduationCap className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">No academic records found</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="bulk">
+          <Card>
+            <CardHeader>
+              <CardTitle>Bulk Operations</CardTitle>
+              <CardDescription>Upload multiple academic records via CSV</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <label htmlFor="bulk-upload" className="block mb-2 font-medium text-gray-700 dark:text-gray-300">
+                  Upload CSV File
+                </label>
+                <Input
+                  id="bulk-upload"
+                  type="file"
+                  accept=".csv"
+                  onChange={handleBulkUpload}
+                  disabled={bulkUploading}
+                />
+              </div>
+
+              {bulkResult && (
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                  <h3 className="font-semibold text-blue-900">Upload Results</h3>
+                  <p className="text-blue-700">{bulkResult.message}</p>
+                  <p className="text-sm text-blue-600">
+                    Successfully added: {bulkResult.successfullyAddedCount} of {bulkResult.totalRowsAttempted} records
+                  </p>
+                  <p className="text-sm text-blue-600">
+                    Total records processed: {bulkResult.recordsAdded}
+                  </p>
                 </div>
               )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      
-      <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 dark:border-gray-700/50 p-6">
-        <div className="flex flex-wrap items-center gap-4 mb-6">
-          <SearchInput
-            placeholder="Search by student, course, group, or term..."
-            onSearch={setSearchQuery}
-            className="flex-grow max-w-md"
-          />
-          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 ml-auto">
-            <Filter className="h-4 w-4" />
-            <span>Showing {filteredRecords.length} of {records.length} records</span>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Student</TableHead>
-                <TableHead>Course</TableHead>
-                <TableHead>Group</TableHead>
-                <TableHead>Assessment</TableHead>
-                <TableHead>Grade</TableHead>
-                <TableHead>Term</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date Recorded</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredRecords.map((record) => (
-                <TableRow key={record.id}>
-                  <TableCell className="font-medium">{record.studentFullName}</TableCell>
-                  <TableCell>{record.courseTitle}</TableCell>
-                  <TableCell>{record.groupLabel}</TableCell>
-                  <TableCell>{getAssessmentTypeLabel(record.assessmentType)}</TableCell>
-                  <TableCell>
-                    <span className={`font-semibold text-lg ${getGradeColor(record.gradeValue)}`}>
-                      {record.gradeValue}%
-                    </span>
-                  </TableCell>
-                  <TableCell>{record.term}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(record.status)}`}>
-                      {getStatusLabel(record.status)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-sm text-gray-500 dark:text-gray-300">
-                    {new Date(record.dateRecorded).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleEdit(record)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDelete(record.id)} className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-
-          {loading && records.length > 0 && <p className="text-center py-4">Refreshing records...</p> }
-          {!loading && filteredRecords.length === 0 && (
-            <div className="text-center py-8">
-              <ListChecks className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 dark:text-gray-400">
-                {records.length === 0 ? "No academic records have been added yet." : "No records match your search."}
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {isModalOpen && (
         <AcademicRecordModal
           isOpen={isModalOpen}
-          onClose={handleModalClose}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingRecord(null);
+          }}
           record={editingRecord}
-          // You'll need to pass other necessary props to the modal, e.g., lists of students/groups for dropdowns if the modal edits these.
-          // For now, assuming it primarily handles grade, assessment type, term, status for an existing record.
+          onSave={() => {
+            fetchRecords();
+            setIsModalOpen(false);
+            setEditingRecord(null);
+          }}
         />
       )}
     </div>
