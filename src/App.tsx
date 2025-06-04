@@ -33,6 +33,7 @@ import QuizModels from "./pages/Instructor/QuizModels";
 import QuizAttempts from "./pages/Instructor/QuizAttempts";
 import InstructorGroups from "./pages/Instructor/InstructorGroups";
 import InstructorAssignments from "./pages/Instructor/InstructorAssignments";
+import InstructorGrading from "./pages/Instructor/InstructorGrading";
 import './i18n/config';
 
 const queryClient = new QueryClient();
@@ -126,6 +127,11 @@ const App = () => (
                     <Route path="instructor/assignments" element={
                       <RoleGuard allowedRoles={[3]}>
                         <InstructorAssignments />
+                      </RoleGuard>
+                    } />
+                    <Route path="instructor/grading" element={
+                      <RoleGuard allowedRoles={[3]}>
+                        <InstructorGrading />
                       </RoleGuard>
                     } />
                   </Route>
