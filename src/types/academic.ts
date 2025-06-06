@@ -12,6 +12,9 @@ export enum AssessmentType {
 export enum AcademicRecordStatus {
   Provisional = 0,
   Final = 1,
+  Pending = 2,
+  Completed = 3,
+  Graded = 4
 }
 
 export interface AcademicRecordDTO {
