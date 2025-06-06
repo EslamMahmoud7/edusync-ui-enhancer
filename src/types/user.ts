@@ -66,3 +66,8 @@ export interface BulkEnrollmentResultDTO {
   failedStudentIds: string[];
   errors: Record<string, string>;
 }
+
+export interface BulkGroupRemovalDTO {
+  groupId: string;
+  studentIds: string[];
+}

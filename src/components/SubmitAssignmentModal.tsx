@@ -56,10 +56,8 @@ export default function SubmitAssignmentModal({
       form.reset();
       onClose();
       onSubmitSuccess?.();
-      alert('Assignment submitted successfully!');
     } catch (error: any) {
       console.error('Error submitting assignment:', error);
-      alert(error.response?.data || 'Error submitting assignment');
     } finally {
       setLoading(false);
     }

@@ -8,7 +8,8 @@ import type {
   UploadUsersCsvDTO,
   GroupEnrollmentDTO,
   BulkGroupEnrollmentDTO,
-  BulkEnrollmentResultDTO
+  BulkEnrollmentResultDTO,
+  BulkGroupRemovalDTO 
 } from '../types/user';
 
 export const userService = {
@@ -67,5 +68,11 @@ export const userService = {
   assignToGroupBulk: async (data: BulkGroupEnrollmentDTO): Promise<BulkEnrollmentResultDTO> => {
     const response = await api.post('/api/course/assign-students-to-group-bulk', data);
     return response.data;
+  },
+
+  removeFromGroupBulk: async (data: BulkGroupRemovalDTO): Promise<void> => {
+    const requestBody = { studentIds: data.studentIds };
+    
+    await api.post(`/api/Group/${data.groupId}/remove-students`, requestBody);
   }
 };

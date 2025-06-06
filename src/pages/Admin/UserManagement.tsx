@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { Plus, Edit, Trash2, Shield, ShieldOff, Upload, Users as UsersIcon } from 'lucide-react';
+import { Plus, Edit, Trash2, Shield, ShieldOff, Upload, Users as UsersIcon, UserMinus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -34,6 +33,7 @@ export default function UserManagement() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isCsvDialogOpen, setIsCsvDialogOpen] = useState(false);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false); // New state for the remove dialog
   const [editingUser, setEditingUser] = useState<UserDTO | null>(null);
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvRole, setCsvRole] = useState<number>(1);
@@ -69,7 +69,7 @@ export default function UserManagement() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateUserDTO }) => 
+    mutationFn: ({ id, data }: { id: string; data: UpdateUserDTO }) =>
       userService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -99,8 +99,8 @@ export default function UserManagement() {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setIsCsvDialogOpen(false);
       setCsvFile(null);
-      toast({ 
-        title: `CSV Upload Complete`, 
+      toast({
+        title: `CSV Upload Complete`,
         description: `${result.successfullyAddedCount} users added successfully. ${result.errorMessages.length} errors.`
       });
     },
@@ -115,7 +115,7 @@ export default function UserManagement() {
       setIsAssignDialogOpen(false);
       setSelectedUsers([]);
       setSelectedGroup('');
-      toast({ 
+      toast({
         title: 'Group Assignment Complete',
         description: `${result.studentsEnrolledSuccessfully} users assigned successfully.`
       });
@@ -125,12 +125,27 @@ export default function UserManagement() {
     }
   });
 
+  // New mutation for removing a user from a group
+  const removeFromGroupMutation = useMutation({
+    mutationFn: userService.removeFromGroupBulk, // Assuming a similar service method exists
+    onSuccess: () => {
+      setIsRemoveDialogOpen(false);
+      setSelectedUsers([]);
+      setSelectedGroup('');
+      toast({ title: 'Users removed from group successfully' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error removing users from group', description: error.message, variant: 'destructive' });
+    }
+  });
+
+
   const filteredUsers = users.filter(user => {
-    const matchesSearch = 
+    const matchesSearch =
       user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     return matchesSearch;
   });
 
@@ -163,9 +178,9 @@ export default function UserManagement() {
   };
 
   const toggleUserStatus = (user: UserDTO) => {
-    updateMutation.mutate({ 
-      id: user.id, 
-      data: { isActive: !user.isActive } 
+    updateMutation.mutate({
+      id: user.id,
+      data: { isActive: !user.isActive }
     });
   };
 
@@ -184,6 +199,16 @@ export default function UserManagement() {
     }
     assignToGroupMutation.mutate({ groupId: selectedGroup, studentIds: selectedUsers });
   };
+
+  // New handler for removing users from a group
+  const handleRemoveFromGroup = () => {
+    if (selectedUsers.length === 0 || !selectedGroup) {
+      toast({ title: 'Please select users and a group', variant: 'destructive' });
+      return;
+    }
+    removeFromGroupMutation.mutate({ groupId: selectedGroup, studentIds: selectedUsers });
+  };
+
 
   if (isLoading) {
     return <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div></div>;
@@ -283,6 +308,50 @@ export default function UserManagement() {
               </div>
             </DialogContent>
           </Dialog>
+
+          {/* New "Remove from Group" Dialog */}
+          <Dialog open={isRemoveDialogOpen} onOpenChange={setIsRemoveDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="destructive">
+                <UserMinus className="h-4 w-4 mr-2" />
+                Remove from Group
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Remove Users from Group</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Selected Users: {selectedUsers.length}</label>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Group</label>
+                  <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a group" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {groups.map((group) => (
+                        <SelectItem key={group.id} value={group.id}>
+                          {group.label} - {group.courseTitle}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsRemoveDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleRemoveFromGroup} disabled={removeFromGroupMutation.isPending} variant="destructive">
+                    {removeFromGroupMutation.isPending ? 'Removing...' : 'Remove'}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
 
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
@@ -607,4 +676,4 @@ export default function UserManagement() {
       </Dialog>
     </div>
   );
-}
+} 
