@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
 import { materialService, CreateMaterialDTO } from '../services/material';
 
 interface AddMaterialModalProps {
@@ -14,17 +16,26 @@ interface AddMaterialModalProps {
   onMaterialAdded: () => void;
 }
 
-export default function AddMaterialModal({ isOpen, onClose, groupId, onMaterialAdded }: AddMaterialModalProps) {
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    fileUrl: '',
-    type: 0,
-  });
-  const [loading, setLoading] = useState(false);
+interface FormData {
+  title: string;
+  description: string;
+  fileUrl: string;
+  type: number;
+}
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+export default function AddMaterialModal({ isOpen, onClose, groupId, onMaterialAdded }: AddMaterialModalProps) {
+  const [loading, setLoading] = useState(false);
+  
+  const form = useForm<FormData>({
+    defaultValues: {
+      title: '',
+      description: '',
+      fileUrl: '',
+      type: 0,
+    }
+  });
+
+  const handleSubmit = async (data: FormData) => {
     setLoading(true);
 
     try {
@@ -33,7 +44,7 @@ export default function AddMaterialModal({ isOpen, onClose, groupId, onMaterialA
       const { id: instructorId } = JSON.parse(stored);
 
       const createData: CreateMaterialDTO = {
-        ...formData,
+        ...data,
         groupId,
         uploadingInstructorId: instructorId,
       };
@@ -41,7 +52,7 @@ export default function AddMaterialModal({ isOpen, onClose, groupId, onMaterialA
       await materialService.create(createData);
       onMaterialAdded();
       onClose();
-      setFormData({ title: '', description: '', fileUrl: '', type: 0 });
+      form.reset();
     } catch (error) {
       console.error('Error adding material:', error);
     } finally {
@@ -56,61 +67,110 @@ export default function AddMaterialModal({ isOpen, onClose, groupId, onMaterialA
           <DialogTitle>Add New Material</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Title</label>
-            <Input
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              required
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="title"
+              rules={{ 
+                required: "Title is required",
+                minLength: { value: 2, message: "Title must be at least 2 characters" },
+                maxLength: { value: 100, message: "Title cannot exceed 100 characters" }
+              }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter material title" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
-            <Textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={3}
+            <FormField
+              control={form.control}
+              name="description"
+              rules={{ 
+                maxLength: { value: 500, message: "Description cannot exceed 500 characters" }
+              }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Enter material description"
+                      rows={3}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">File URL</label>
-            <Input
-              type="url"
-              value={formData.fileUrl}
-              onChange={(e) => setFormData({ ...formData, fileUrl: e.target.value })}
-              required
+            <FormField
+              control={form.control}
+              name="fileUrl"
+              rules={{ 
+                required: "File URL is required",
+                pattern: {
+                  value: /^https?:\/\/.+/,
+                  message: "Please enter a valid URL"
+                }
+              }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>File URL</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="url"
+                      placeholder="https://example.com/file"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Type</label>
-            <Select
-              value={formData.type.toString()}
-              onValueChange={(value) => setFormData({ ...formData, type: parseInt(value) })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">Document</SelectItem>
-                <SelectItem value="1">Video</SelectItem>
-                <SelectItem value="2">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            <FormField
+              control={form.control}
+              name="type"
+              rules={{ required: "Type is required" }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Type</FormLabel>
+                  <FormControl>
+                    <Select
+                      value={field.value.toString()}
+                      onValueChange={(value) => field.onChange(parseInt(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select material type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">Document</SelectItem>
+                        <SelectItem value="1">Video</SelectItem>
+                        <SelectItem value="2">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading} className="flex-1">
-              {loading ? 'Adding...' : 'Add Material'}
-            </Button>
-          </div>
-        </form>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading} className="flex-1">
+                {loading ? 'Adding...' : 'Add Material'}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

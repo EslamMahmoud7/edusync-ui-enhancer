@@ -1,6 +1,10 @@
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { Edit, Trash2, Filter, UploadCloud, ListChecks, AlertCircle } from 'lucide-react';
 import { Button } from '../../components/ui/button';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../../components/ui/form';
+import { Input } from '../../components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { useForm } from 'react-hook-form';
 import { useToast } from '../../hooks/use-toast';
 import { academicRecordsService } from '../../services/academicRecords';
 import { groupService } from '../../services/group';
@@ -18,10 +22,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import SearchInput from '../../components/SearchInput';
 import AcademicRecordModal from '../../components/AcademicRecordModal'; 
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Input } from '../../components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { useAuth } from '../../Context/useAuth'; 
 
+interface CsvUploadFormData {
+  groupId: string;
+  term: string;
+  assessmentType: string;
+}
 
 export default function AcademicRecordsPage() {
   const { user } = useAuth(); 
@@ -34,12 +41,17 @@ export default function AcademicRecordsPage() {
   const { toast } = useToast();
 
   const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
-  const [term, setTerm] = useState<string>('');
-  const [selectedAssessmentType, setSelectedAssessmentType] = useState<string>('');
   const [groups, setGroups] = useState<GroupDTO[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<BulkAddAcademicRecordsResultDTO | null>(null);
+
+  const csvForm = useForm<CsvUploadFormData>({
+    defaultValues: {
+      groupId: '',
+      term: '',
+      assessmentType: ''
+    }
+  });
 
   useEffect(() => {
     fetchPageData();
@@ -87,7 +99,6 @@ export default function AcademicRecordsPage() {
     }
   };
 
-
   const filterRecords = () => {
     if (!searchQuery) {
       setFilteredRecords(records);
@@ -134,20 +145,20 @@ export default function AcademicRecordsPage() {
     }
   };
 
-  const handleCsvUploadSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!csvFile || !selectedGroupId || !term || selectedAssessmentType === '') {
-      toast({ title: "Missing Fields", description: "Please fill all required fields for CSV upload.", variant: "destructive" });
+  const handleCsvUploadSubmit = async (data: CsvUploadFormData) => {
+    if (!csvFile) {
+      toast({ title: "Missing File", description: "Please select a CSV file to upload.", variant: "destructive" });
       return;
     }
+    
     setIsUploading(true);
     setUploadResult(null);
 
     const formData = new FormData();
     formData.append('CsvFile', csvFile);
-    formData.append('GroupId', selectedGroupId);
-    formData.append('Term', term);
-    formData.append('AssessmentType', selectedAssessmentType);
+    formData.append('GroupId', data.groupId);
+    formData.append('Term', data.term);
+    formData.append('AssessmentType', data.assessmentType);
     if (user?.id) {
       formData.append('UploadingInstructorId', user.id);
     }
@@ -163,6 +174,8 @@ export default function AcademicRecordsPage() {
       if (result.successfullyAddedCount > 0) {
         fetchRecords(); 
       }
+      csvForm.reset();
+      setCsvFile(null);
     } catch (error: any) {
       console.error('CSV Upload failed:', error);
       const errorMsg = error.response?.data?.errorMessages?.join(', ') || error.response?.data?.title || "CSV upload failed. Please check the file format and data.";
@@ -218,50 +231,89 @@ export default function AcademicRecordsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleCsvUploadSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
-              <div>
-                <label htmlFor="csvFile" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CSV File*</label>
-                <Input id="csvFile" type="file" accept=".csv" onChange={handleFileChange} required className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
+          <Form {...csvForm}>
+            <form onSubmit={csvForm.handleSubmit(handleCsvUploadSubmit)} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+                <div>
+                  <label htmlFor="csvFile" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CSV File*</label>
+                  <Input id="csvFile" type="file" accept=".csv" onChange={handleFileChange} required className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
+                </div>
+                
+                <FormField
+                  control={csvForm.control}
+                  name="groupId"
+                  rules={{ required: "Group is required" }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Group*</FormLabel>
+                      <FormControl>
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <SelectValue placeholder="Select Group" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {groups.length > 0 ? groups.map(group => (
+                              <SelectItem key={group.id} value={group.id}>{group.courseTitle}</SelectItem>
+                            )) : <SelectItem value="" disabled>No groups found</SelectItem>}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={csvForm.control}
+                  name="term"
+                  rules={{ 
+                    required: "Term is required",
+                    minLength: { value: 3, message: "Term must be at least 3 characters" }
+                  }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Term*</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Fall 2024" className="dark:bg-gray-700 dark:border-gray-600 dark:text-white" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={csvForm.control}
+                  name="assessmentType"
+                  rules={{ required: "Assessment type is required" }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assessment Type*</FormLabel>
+                      <FormControl>
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <SelectValue placeholder="Select Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(AssessmentType)
+                                .filter(([, value]) => typeof value === 'number')
+                                .map(([key, value]) => (
+                              <SelectItem key={value as number} value={(value as number).toString()}>{key}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <Button type="submit" disabled={isUploading || !csvFile} className="bg-edusync-primary hover:bg-edusync-primary/90 w-full md:w-auto lg:col-span-1">
+                  {isUploading ? 'Uploading...' : 'Upload Records'}
+                </Button>
               </div>
-              <div>
-                <label htmlFor="groupId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Group*</label>
-                <Select value={selectedGroupId} onValueChange={setSelectedGroupId} required>
-                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    <SelectValue placeholder="Select Group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {groups.length > 0 ? groups.map(group => (
-                      <SelectItem key={group.id} value={group.id}>{group.courseTitle}</SelectItem>
-                    )) : <SelectItem value="" disabled>No groups found</SelectItem>}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label htmlFor="term" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Term*</label>
-                <Input id="term" value={term} onChange={(e) => setTerm(e.target.value)} placeholder="e.g., Fall 2024" required  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
-              </div>
-              <div>
-                <label htmlFor="assessmentType" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assessment Type*</label>
-                <Select value={selectedAssessmentType} onValueChange={(value) => setSelectedAssessmentType(value)} required>
-                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    <SelectValue placeholder="Select Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(AssessmentType)
-                        .filter(([, value]) => typeof value === 'number')
-                        .map(([key, value]) => (
-                      <SelectItem key={value as number} value={(value as number).toString()}>{key}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button type="submit" disabled={isUploading || !csvFile} className="bg-edusync-primary hover:bg-edusync-primary/90 w-full md:w-auto lg:col-span-1">
-                {isUploading ? 'Uploading...' : 'Upload Records'}
-              </Button>
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">CSV format: Header row (StudentId,GradeValue), then data rows.</p>
-          </form>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">CSV format: Header row (StudentId,GradeValue), then data rows.</p>
+            </form>
+          </Form>
 
           {uploadResult && (
             <div className={`mt-4 p-3 rounded-md text-sm ${uploadResult.errorMessages.length > 0 && uploadResult.successfullyAddedCount === 0 ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300' : (uploadResult.errorMessages.length > 0 ? 'bg-yellow-100 dark:bg-yellow-800/50 text-yellow-700 dark:text-yellow-300' : 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300')}`}>
@@ -369,7 +421,6 @@ export default function AcademicRecordsPage() {
           isOpen={isModalOpen}
           onClose={handleModalClose}
           record={editingRecord}
-
         />
       )}
     </div>

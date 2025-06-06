@@ -3,8 +3,9 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
 import { Upload, Link, FileText } from 'lucide-react';
 import { submittedAssignmentService, SubmitAssignmentDTO } from '../services/submittedAssignment';
 import { useAuth } from '../Context/useAuth';
@@ -17,6 +18,11 @@ interface SubmitAssignmentModalProps {
   onSubmitSuccess?: () => void;
 }
 
+interface FormData {
+  title: string;
+  submissionLink: string;
+}
+
 export default function SubmitAssignmentModal({ 
   isOpen, 
   onClose, 
@@ -26,13 +32,15 @@ export default function SubmitAssignmentModal({
 }: SubmitAssignmentModalProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    submissionLink: ''
+  
+  const form = useForm<FormData>({
+    defaultValues: {
+      title: '',
+      submissionLink: ''
+    }
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (data: FormData) => {
     if (!user?.id) return;
 
     setLoading(true);
@@ -40,12 +48,12 @@ export default function SubmitAssignmentModal({
       const submitData: SubmitAssignmentDTO = {
         assignmentId,
         studentId: user.id,
-        title: formData.title,
-        submissionLink: formData.submissionLink
+        title: data.title,
+        submissionLink: data.submissionLink
       };
 
       await submittedAssignmentService.submit(submitData);
-      setFormData({ title: '', submissionLink: '' });
+      form.reset();
       onClose();
       onSubmitSuccess?.();
       alert('Assignment submitted successfully!');
@@ -58,7 +66,7 @@ export default function SubmitAssignmentModal({
   };
 
   const handleClose = () => {
-    setFormData({ title: '', submissionLink: '' });
+    form.reset();
     onClose();
   };
 
@@ -80,56 +88,82 @@ export default function SubmitAssignmentModal({
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="title">Submission Title</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Enter submission title"
-                required
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="title"
+                rules={{ 
+                  required: "Submission title is required",
+                  minLength: { value: 3, message: "Title must be at least 3 characters" },
+                  maxLength: { value: 100, message: "Title cannot exceed 100 characters" }
+                }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Submission Title</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter submission title"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <div>
-              <Label htmlFor="submissionLink">Submission Link</Label>
-              <div className="relative">
-                <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  id="submissionLink"
-                  type="url"
-                  value={formData.submissionLink}
-                  onChange={(e) => setFormData({ ...formData, submissionLink: e.target.value })}
-                  placeholder="https://drive.google.com/..."
-                  className="pl-10"
-                  required
-                />
+              <FormField
+                control={form.control}
+                name="submissionLink"
+                rules={{ 
+                  required: "Submission link is required",
+                  pattern: {
+                    value: /^https?:\/\/.+/,
+                    message: "Please enter a valid URL"
+                  }
+                }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Submission Link</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          type="url"
+                          placeholder="https://drive.google.com/..."
+                          className="pl-10"
+                          {...field}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Provide a link to your submission (Google Drive, GitHub, etc.)
+                    </p>
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex gap-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleClose}
+                  className="flex-1"
+                  disabled={loading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1 bg-edusync-primary hover:bg-edusync-secondary"
+                  disabled={loading}
+                >
+                  {loading ? 'Submitting...' : 'Submit Assignment'}
+                </Button>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Provide a link to your submission (Google Drive, GitHub, etc.)
-              </p>
-            </div>
-
-            <div className="flex gap-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleClose}
-                className="flex-1"
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="flex-1 bg-edusync-primary hover:bg-edusync-secondary"
-                disabled={loading}
-              >
-                {loading ? 'Submitting...' : 'Submit Assignment'}
-              </Button>
-            </div>
-          </form>
+            </form>
+          </Form>
         </div>
       </DialogContent>
     </Dialog>

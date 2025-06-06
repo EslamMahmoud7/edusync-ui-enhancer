@@ -3,6 +3,11 @@ import { Users, BookOpen, UserCheck, BarChart3, Plus, Settings, Megaphone } from
 import { useAuth } from "../../Context/useAuth";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import api from "../../services/api";
 import { announcementService } from "../../services/announcement";
 import type { CreateAnnouncementDTO } from "../../types/announcement";
@@ -20,6 +25,11 @@ interface AdminDashboardCountsDTO {
   };
 }
 
+interface AnnouncementFormData {
+  title: string;
+  message: string;
+}
+
 export default function AdminDashboard() {
   const { user } = useAuth();
   const { t } = useTranslation();
@@ -28,9 +38,14 @@ export default function AdminDashboard() {
   const [dashData, setDashData] = useState<AdminDashboardCountsDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [announcementTitle, setAnnouncementTitle] = useState("");
-  const [announcementMessage, setAnnouncementMessage] = useState("");
   const [isPostingAnnouncement, setIsPostingAnnouncement] = useState(false);
+
+  const form = useForm<AnnouncementFormData>({
+    defaultValues: {
+      title: "",
+      message: ""
+    }
+  });
 
   useEffect(() => {
     async function fetchCounts() {
@@ -57,21 +72,16 @@ export default function AdminDashboard() {
     fetchCounts();
   }, []);
 
-  const handlePostAnnouncement = async () => {
-    if (!announcementTitle.trim() || !announcementMessage.trim()) {
-      return;
-    }
-
+  const handlePostAnnouncement = async (data: AnnouncementFormData) => {
     setIsPostingAnnouncement(true);
     try {
       const announcementData: CreateAnnouncementDTO = {
-        title: announcementTitle,
-        message: announcementMessage
+        title: data.title,
+        message: data.message
       };
       
       await announcementService.create(announcementData);
-      setAnnouncementTitle("");
-      setAnnouncementMessage("");
+      form.reset();
     } catch (error) {
       console.error("Error posting announcement:", error);
     } finally {
@@ -195,42 +205,61 @@ export default function AdminDashboard() {
           <Megaphone className="h-6 w-6 text-edusync-primary" />
           Post Announcement
         </h2>
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="announcementTitle" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Title
-            </label>
-            <input
-              id="announcementTitle"
-              type="text"
-              value={announcementTitle}
-              onChange={(e) => setAnnouncementTitle(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-edusync-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              placeholder="Enter announcement title..."
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handlePostAnnouncement)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="title"
+              rules={{ 
+                required: "Title is required",
+                minLength: { value: 3, message: "Title must be at least 3 characters" },
+                maxLength: { value: 100, message: "Title cannot exceed 100 characters" }
+              }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter announcement title..."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div>
-            <label htmlFor="announcementMessage" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Message
-            </label>
-            <textarea
-              id="announcementMessage"
-              value={announcementMessage}
-              onChange={(e) => setAnnouncementMessage(e.target.value)}
-              rows={4}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-edusync-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              placeholder="Enter announcement message..."
+            <FormField
+              control={form.control}
+              name="message"
+              rules={{ 
+                required: "Message is required",
+                minLength: { value: 10, message: "Message must be at least 10 characters" },
+                maxLength: { value: 1000, message: "Message cannot exceed 1000 characters" }
+              }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Message</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      rows={4}
+                      placeholder="Enter announcement message..."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <button
-            onClick={handlePostAnnouncement}
-            disabled={!announcementTitle.trim() || !announcementMessage.trim() || isPostingAnnouncement}
-            className="px-6 py-2 bg-edusync-primary hover:bg-edusync-secondary disabled:bg-gray-400 text-white rounded-lg transition-colors duration-200 flex items-center gap-2"
-          >
-            <Megaphone className="h-4 w-4" />
-            {isPostingAnnouncement ? "Posting..." : "Post Announcement"}
-          </button>
-        </div>
+            <Button
+              type="submit"
+              disabled={isPostingAnnouncement}
+              className="px-6 py-2 bg-edusync-primary hover:bg-edusync-secondary text-white rounded-lg transition-colors duration-200 flex items-center gap-2"
+            >
+              <Megaphone className="h-4 w-4" />
+              {isPostingAnnouncement ? "Posting..." : "Post Announcement"}
+            </Button>
+          </form>
+        </Form>
       </div>
 
       {/* Stats Grid */}
