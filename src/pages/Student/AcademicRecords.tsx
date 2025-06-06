@@ -162,7 +162,6 @@ export default function StudentAcademicRecords() {
                 <TableHead>Grade</TableHead>
                 <TableHead>Term</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -181,9 +180,6 @@ export default function StudentAcademicRecords() {
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(record.status)}`}>
                       {getStatusLabel(record.status)}
                     </span>
-                  </TableCell>
-                  <TableCell className="text-sm text-gray-600">
-                    {new Date(record.updatedAt).toLocaleDateString()}
                   </TableCell>
                 </TableRow>
               ))}
