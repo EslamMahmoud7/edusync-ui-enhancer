@@ -1,12 +1,12 @@
-
 import { useState, useEffect } from "react";
+import { Search, FileText, Calendar, Clock, CheckCircle2, AlertCircle, ExternalLink, Edit3, Trash2 } from "lucide-react";
 import api from "../../services/api";
 import SubmitAssignmentModal from "../../components/SubmitAssignmentModal";
-import AssignmentCard from "../../components/AssignmentCard";
-import AssignmentFilters from "../../components/AssignmentFilters";
-import AssignmentDetailsModal from "../../components/AssignmentDetailsModal";
-import EditSubmissionModal from "../../components/EditSubmissionModal";
 import { submittedAssignmentService, UpdateSubmissionDTO } from "../../services/submittedAssignment";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Assignment {
   id: string;
@@ -136,6 +136,7 @@ export default function AssignmentsPage() {
 
       await submittedAssignmentService.update(editingSubmission.id, updateData);
       
+      // Refresh assignments
       setLoading(true);
       fetchAssignments()
         .then((data) => {
@@ -162,6 +163,7 @@ export default function AssignmentsPage() {
     try {
       await submittedAssignmentService.delete(submissionId);
       
+      // Refresh assignments
       setLoading(true);
       fetchAssignments()
         .then((data) => {
@@ -196,52 +198,188 @@ export default function AssignmentsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <AssignmentFilters
-        filterStatus={filterStatus}
-        setFilterStatus={setFilterStatus}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        statusCounts={statusCounts}
-        filteredCount={filtered.length}
-      />
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filtered.map((assignment, index) => (
-          <AssignmentCard
-            key={assignment.id}
-            assignment={assignment}
-            index={index}
-            onSubmit={handleOpenSubmitModal}
-            onViewDetails={setSelected}
-            onEdit={handleEditSubmission}
-            onDelete={handleDeleteSubmission}
+      {/* Search and Filter UI (unchanged) */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-edusync-primary to-edusync-accent bg-clip-text text-transparent">
+          Assignments
+        </h1>
+        <div className="text-sm text-gray-500">
+          {filtered.length} assignment{filtered.length !== 1 ? "s" : ""} found
+        </div>
+      </div>
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="flex flex-wrap gap-3">
+          {(["All", "Pending", "Submitted", "Graded"] as const).map((status, index) => (
+            <button
+              key={status}
+              onClick={() => setFilterStatus(status)}
+              className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
+                filterStatus === status
+                  ? "bg-gradient-to-r from-edusync-primary to-edusync-secondary text-white shadow-lg"
+                  : "bg-white/80 backdrop-blur-sm text-gray-700 border border-gray-200/50 hover:bg-edusync-primary/5 hover:border-edusync-primary/20"
+              }`}
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              {status}
+              <span className="ml-2 px-2 py-1 text-xs rounded-full bg-white/20">
+                {statusCounts[status]}
+              </span>
+            </button>
+          ))}
+        </div>
+        <div className="relative max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search assignments..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-edusync-primary/20 focus:border-edusync-primary transition-all duration-200"
           />
-        ))}
+        </div>
+      </div>
+      
+      {/* Assignment Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {filtered.map((assignment, index) => {
+          const getStatusConfig = (status: string) => {
+            switch (status) {
+              case "Submitted": return { borderColor: "border-blue-500", bgColor: "bg-blue-500/5", textColor: "text-blue-500", icon: <Clock className="w-4 h-4" /> };
+              case "Graded": return { borderColor: "border-green-500", bgColor: "bg-green-500/5", textColor: "text-green-500", icon: <CheckCircle2 className="w-4 h-4" /> };
+              default: return { borderColor: "border-orange-500", bgColor: "bg-orange-500/5", textColor: "text-orange-500", icon: <AlertCircle className="w-4 h-4" /> };
+            }
+          };
+          const statusConfig = getStatusConfig(assignment.status);
+
+          return (
+            <div key={assignment.id} className={`group bg-white/90 backdrop-blur-lg rounded-2xl shadow-soft border-l-4 ${statusConfig.borderColor} p-6 hover:shadow-elevation transition-all duration-300 transform hover:-translate-y-1 animate-scale-in`} style={{ animationDelay: `${index * 100}ms` }}>
+              <div className="flex items-center justify-between mb-4">
+                <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${statusConfig.bgColor}`}>
+                  {statusConfig.icon}
+                  <span className={`text-sm font-medium ${statusConfig.textColor}`}>{assignment.status}</span>
+                </div>
+                <FileText className="w-5 h-5 text-gray-400 group-hover:text-edusync-primary transition-colors duration-200" />
+              </div>
+              <div className="space-y-3 mb-6">
+                <h3 className="font-bold text-gray-800 text-lg leading-tight group-hover:text-edusync-primary transition-colors duration-200">{assignment.title}</h3>
+                <div className="flex items-center gap-2 text-gray-600"><div className="w-6 h-6 bg-edusync-primary/10 rounded-full flex items-center justify-center"><FileText className="w-3 h-3 text-edusync-primary" /></div><span className="text-sm">{assignment.course}</span></div>
+                <div className="flex items-center gap-2 text-gray-600"><div className="w-6 h-6 bg-edusync-secondary/10 rounded-full flex items-center justify-center"><Calendar className="w-3 h-3 text-edusync-secondary" /></div><span className="text-sm">Due: {new Date(assignment.dueDate).toLocaleDateString()}</span></div>
+                {assignment.submissionDate && <div className="flex items-center gap-2 text-gray-600"><div className="w-6 h-6 bg-blue-500/10 rounded-full flex items-center justify-center"><Clock className="w-3 h-3 text-blue-500" /></div><span className="text-sm">Submitted: {assignment.submissionDate}</span></div>}
+                {assignment.status === "Graded" && assignment.grade != null && <div className="p-3 bg-green-500/10 rounded-lg"><p className="text-sm font-bold text-green-500">Grade: {assignment.grade}</p></div>}
+              </div>
+              
+              <div className="space-y-2">
+                <button onClick={() => { assignment.status === "Pending" ? handleOpenSubmitModal(assignment) : setSelected(assignment); }} className="w-full py-3 bg-gradient-to-r from-edusync-primary to-edusync-secondary text-white rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105 font-medium">
+                  {assignment.status === "Pending" ? "Submit Assignment" : (assignment.status === "Graded" ? "View Grade" : "View Submission")}
+                </button>
+                
+                {assignment.status === "Submitted" && assignment.submissionId && (
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => handleEditSubmission(assignment)}
+                      className="flex-1 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                      Edit
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteSubmission(assignment.submissionId!)}
+                      className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
+      {/* Details Modal (Unchanged) */}
       {selected && (
-        <AssignmentDetailsModal
-          assignment={selected}
-          onClose={() => setSelected(null)}
-        />
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-glass p-6 w-full max-w-md animate-scale-in">
+            <h2 className="text-xl font-bold text-edusync-primary mb-4">{selected.status === "Graded" ? "Grade Details" : "Submission Details"}</h2>
+            <div className="space-y-4 mb-6 text-left">
+              <div><p className="text-sm text-gray-500">Assignment Title</p><p className="font-medium text-gray-800">{selected.title}</p></div>
+              <div><p className="text-sm text-gray-500">Course</p><p className="font-medium text-gray-800">{selected.course}</p></div>
+              <hr/>
+              {/* Conditional View for "Submitted" */}
+              {selected.status === 'Submitted' && (<>
+                  <div><p className="text-sm text-gray-500">Your Submission Title</p><p className="font-medium text-gray-800">{selected.submissionTitle || 'No title provided'}</p></div>
+                  <div><p className="text-sm text-gray-500">Submission Link</p><a href={selected.submissionLink} target="_blank" rel="noopener noreferrer" className="font-medium text-edusync-primary hover:underline break-all flex items-center gap-1">{selected.submissionLink} <ExternalLink size={14}/></a></div>
+              </>)}
+              {/* Conditional View for "Graded" */}
+              {selected.status === 'Graded' && (<>
+                  {selected.grade != null ? (<div className="p-3 bg-green-500/10 rounded-lg"><p className="text-sm text-gray-500">Grade</p><p className="text-lg font-bold text-green-500">{selected.grade}</p></div>) : (<div className="p-3 bg-red-500/10 rounded-lg"><p className="text-sm font-bold text-red-500">Grade not available.</p></div>)}
+                  {selected.instructorNotes && (<div className="p-3 bg-blue-500/10 rounded-lg mt-4"><p className="text-sm text-gray-500">Instructor Notes</p><p className="font-medium text-gray-800 whitespace-pre-wrap">{selected.instructorNotes}</p></div>)}
+              </>)}
+            </div>
+            <button onClick={() => setSelected(null)} className="w-full py-3 bg-gray-100 hover:bg-gray-200 rounded-xl text-gray-700 font-medium transition-colors duration-200">Close</button>
+          </div>
+        </div>
       )}
 
-      <EditSubmissionModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        editingSubmission={editingSubmission}
-        setEditingSubmission={setEditingSubmission}
-        onUpdate={handleUpdateSubmission}
-      />
+      {/* Edit Submission Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit3 className="h-5 w-5 text-edusync-primary" />
+              Edit Submission
+            </DialogTitle>
+          </DialogHeader>
 
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit-title">Submission Title</Label>
+              <Input
+                id="edit-title"
+                value={editingSubmission.title}
+                onChange={(e) => setEditingSubmission({ ...editingSubmission, title: e.target.value })}
+                placeholder="Enter submission title"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-link">Submission Link</Label>
+              <Input
+                id="edit-link"
+                type="url"
+                value={editingSubmission.submissionLink}
+                onChange={(e) => setEditingSubmission({ ...editingSubmission, submissionLink: e.target.value })}
+                placeholder="https://drive.google.com/..."
+              />
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsEditModalOpen(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleUpdateSubmission}
+                className="flex-1 bg-edusync-primary hover:bg-edusync-secondary"
+                disabled={!editingSubmission.title || !editingSubmission.submissionLink}
+              >
+                Update Submission
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Submit Modal (Unchanged) */}
       {isSubmitModalOpen && assignmentToSubmit && (
-        <SubmitAssignmentModal 
-          isOpen={isSubmitModalOpen} 
-          onClose={() => setIsSubmitModalOpen(false)} 
-          assignmentId={assignmentToSubmit.id} 
-          assignmentTitle={assignmentToSubmit.title} 
-          onSubmitSuccess={handleSubmitSuccess}
-        />
+        <SubmitAssignmentModal isOpen={isSubmitModalOpen} onClose={() => setIsSubmitModalOpen(false)} assignmentId={assignmentToSubmit.id} assignmentTitle={assignmentToSubmit.title} onSubmitSuccess={handleSubmitSuccess}/>
       )}
     </div>
   );
