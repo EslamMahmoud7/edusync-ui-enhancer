@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
-import { Search, FileText, Calendar, Clock, CheckCircle2, AlertCircle, ExternalLink } from "lucide-react";
+import { Search, FileText, Calendar, Clock, CheckCircle2, AlertCircle, ExternalLink, Edit3, Trash2 } from "lucide-react";
 import api from "../../services/api";
 import SubmitAssignmentModal from "../../components/SubmitAssignmentModal";
+import { submittedAssignmentService, UpdateSubmissionDTO } from "../../services/submittedAssignment";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Assignment {
   id: string;
@@ -14,6 +19,7 @@ interface Assignment {
   submissionTitle?: string;
   submissionLink?: string;
   instructorNotes?: string;
+  submissionId?: string;
 }
 
 const fetchAssignments = async (): Promise<Assignment[]> => {
@@ -61,6 +67,12 @@ export default function AssignmentsPage() {
   const [selected, setSelected] = useState<Assignment | null>(null);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [assignmentToSubmit, setAssignmentToSubmit] = useState<{ id: string; title: string } | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingSubmission, setEditingSubmission] = useState({
+    id: '',
+    title: '',
+    submissionLink: ''
+  });
 
   useEffect(() => {
     fetchAssignments()
@@ -102,6 +114,68 @@ export default function AssignmentsPage() {
         setIsSubmitModalOpen(false);
         setAssignmentToSubmit(null);
       });
+  };
+
+  const handleEditSubmission = (assignment: Assignment) => {
+    if (assignment.submissionId) {
+      setEditingSubmission({
+        id: assignment.submissionId,
+        title: assignment.submissionTitle || '',
+        submissionLink: assignment.submissionLink || ''
+      });
+      setIsEditModalOpen(true);
+    }
+  };
+
+  const handleUpdateSubmission = async () => {
+    try {
+      const updateData: UpdateSubmissionDTO = {
+        title: editingSubmission.title,
+        submissionLink: editingSubmission.submissionLink
+      };
+
+      await submittedAssignmentService.update(editingSubmission.id, updateData);
+      
+      // Refresh assignments
+      setLoading(true);
+      fetchAssignments()
+        .then((data) => {
+          setAssignments(data);
+        })
+        .finally(() => {
+          setLoading(false);
+          setIsEditModalOpen(false);
+          setEditingSubmission({ id: '', title: '', submissionLink: '' });
+        });
+      
+      alert('Submission updated successfully!');
+    } catch (error) {
+      console.error('Error updating submission:', error);
+      alert('Error updating submission');
+    }
+  };
+
+  const handleDeleteSubmission = async (submissionId: string) => {
+    if (!confirm('Are you sure you want to delete this submission? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await submittedAssignmentService.delete(submissionId);
+      
+      // Refresh assignments
+      setLoading(true);
+      fetchAssignments()
+        .then((data) => {
+          setAssignments(data);
+        })
+        .finally(() => setLoading(false));
+      
+      alert('Submission deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting submission:', error);
+      alert('Error deleting submission');
+    }
   };
 
   if (loading) {
@@ -195,15 +269,37 @@ export default function AssignmentsPage() {
                 {assignment.submissionDate && <div className="flex items-center gap-2 text-gray-600"><div className="w-6 h-6 bg-blue-500/10 rounded-full flex items-center justify-center"><Clock className="w-3 h-3 text-blue-500" /></div><span className="text-sm">Submitted: {assignment.submissionDate}</span></div>}
                 {assignment.status === "Graded" && assignment.grade != null && <div className="p-3 bg-green-500/10 rounded-lg"><p className="text-sm font-bold text-green-500">Grade: {assignment.grade}</p></div>}
               </div>
-              <button onClick={() => { assignment.status === "Pending" ? handleOpenSubmitModal(assignment) : setSelected(assignment); }} className="w-full py-3 bg-gradient-to-r from-edusync-primary to-edusync-secondary text-white rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105 font-medium">
-                {assignment.status === "Pending" ? "Submit Assignment" : (assignment.status === "Graded" ? "View Grade" : "View Submission")}
-              </button>
+              
+              <div className="space-y-2">
+                <button onClick={() => { assignment.status === "Pending" ? handleOpenSubmitModal(assignment) : setSelected(assignment); }} className="w-full py-3 bg-gradient-to-r from-edusync-primary to-edusync-secondary text-white rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105 font-medium">
+                  {assignment.status === "Pending" ? "Submit Assignment" : (assignment.status === "Graded" ? "View Grade" : "View Submission")}
+                </button>
+                
+                {assignment.status === "Submitted" && assignment.submissionId && (
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => handleEditSubmission(assignment)}
+                      className="flex-1 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                      Edit
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteSubmission(assignment.submissionId!)}
+                      className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           );
         })}
       </div>
 
-      {/* Details Modal (Completely Overhauled) */}
+      {/* Details Modal (Unchanged) */}
       {selected && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-glass p-6 w-full max-w-md animate-scale-in">
@@ -227,6 +323,59 @@ export default function AssignmentsPage() {
           </div>
         </div>
       )}
+
+      {/* Edit Submission Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit3 className="h-5 w-5 text-edusync-primary" />
+              Edit Submission
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit-title">Submission Title</Label>
+              <Input
+                id="edit-title"
+                value={editingSubmission.title}
+                onChange={(e) => setEditingSubmission({ ...editingSubmission, title: e.target.value })}
+                placeholder="Enter submission title"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-link">Submission Link</Label>
+              <Input
+                id="edit-link"
+                type="url"
+                value={editingSubmission.submissionLink}
+                onChange={(e) => setEditingSubmission({ ...editingSubmission, submissionLink: e.target.value })}
+                placeholder="https://drive.google.com/..."
+              />
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsEditModalOpen(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleUpdateSubmission}
+                className="flex-1 bg-edusync-primary hover:bg-edusync-secondary"
+                disabled={!editingSubmission.title || !editingSubmission.submissionLink}
+              >
+                Update Submission
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Submit Modal (Unchanged) */}
       {isSubmitModalOpen && assignmentToSubmit && (

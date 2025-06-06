@@ -26,6 +26,11 @@ export interface GradeSubmittedAssignmentDTO {
   instructorNotes?: string;
 }
 
+export interface UpdateSubmissionDTO {
+  title: string;
+  submissionLink: string;
+}
+
 export const submittedAssignmentService = {
   submit: async (data: SubmitAssignmentDTO): Promise<SubmittedAssignmentDTO> => {
     const response = await api.post('/api/SubmittedAssignments/submit', data);
@@ -52,5 +57,14 @@ export const submittedAssignmentService = {
   getById: async (id: string): Promise<SubmittedAssignmentDTO> => {
     const response = await api.get(`/api/SubmittedAssignments/${id}`);
     return response.data;
+  },
+
+  update: async (submissionId: string, data: UpdateSubmissionDTO): Promise<SubmittedAssignmentDTO> => {
+    const response = await api.put(`/api/SubmittedAssignments/${submissionId}`, data);
+    return response.data;
+  },
+
+  delete: async (submissionId: string): Promise<void> => {
+    await api.delete(`/api/SubmittedAssignments/${submissionId}`);
   }
 };

@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { GraduationCap, Star, Users, FileText, Edit3, Save, X } from 'lucide-react';
+import { GraduationCap, Star, Users, FileText, Edit3, Save, X, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -73,6 +72,21 @@ export default function InstructorGrading() {
     } catch (error) {
       console.error('Error grading submission:', error);
       alert('Error submitting grade');
+    }
+  };
+
+  const handleDeleteSubmission = async (submissionId: string) => {
+    if (!confirm('Are you sure you want to delete this submission? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await submittedAssignmentService.delete(submissionId);
+      setSubmissions(prev => prev.filter(sub => sub.id !== submissionId));
+      alert('Submission deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting submission:', error);
+      alert('Error deleting submission');
     }
   };
 
@@ -166,14 +180,24 @@ export default function InstructorGrading() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      size="sm"
-                      onClick={() => handleGradeSubmission(submission)}
-                      className="bg-edusync-primary hover:bg-edusync-secondary"
-                    >
-                      <Edit3 className="h-4 w-4 mr-1" />
-                      {submission.grade !== undefined ? 'Edit Grade' : 'Grade'}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleGradeSubmission(submission)}
+                        className="bg-edusync-primary hover:bg-edusync-secondary"
+                      >
+                        <Edit3 className="h-4 w-4 mr-1" />
+                        {submission.grade !== undefined ? 'Edit Grade' : 'Grade'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDeleteSubmission(submission.id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Delete
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
