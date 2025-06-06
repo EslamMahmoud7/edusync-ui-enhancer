@@ -1,52 +1,57 @@
+export enum AssessmentType {
+  Midterm = 0,
+  Final = 1,
+  Coursework = 2,
+  Quiz = 3,
+  Project = 4,
+  Attendance = 5,
+  Participation = 6,
+  Other = 7,
+}
+
+export enum AcademicRecordStatus {
+  Provisional = 0,
+  Final = 1,
+}
 
 export interface AcademicRecordDTO {
   id: string;
   studentId: string;
-  studentName: string;
+  studentFullName: string; 
   groupId: string;
-  courseId: string;
-  courseName: string;
+  groupLabel: string;
+  courseId: string;    
+  courseCode: string; 
+  courseTitle: string;
+  instructorId?: string; 
+  instructorFullName?: string;
+  gradeValue: number;
   assessmentType: AssessmentType;
-  marks: number;
-  maxMarks: number;
-  percentage: number;
-  grade: string;
+  term: string;
   status: AcademicRecordStatus;
-  submittedAt: string;
-  gradedAt?: string;
-  feedback?: string;
-  createdAt: string;
-}
-
-export interface CreateAcademicRecordDTO {
-  studentId: string;
-  groupId: string;
-  courseId: string;
-  assessmentType: AssessmentType;
-  marks: number;
-  maxMarks: number;
-  feedback?: string;
+  dateRecorded: string;
 }
 
 export interface UpdateAcademicRecordDTO {
-  marks?: number;
-  maxMarks?: number;
-  grade?: string;
+  gradeValue?: number;
+  assessmentType?: AssessmentType;
+  term?: string;
+  instructorId?: string | null;
   status?: AcademicRecordStatus;
-  feedback?: string;
+  dateRecorded?: string;
 }
 
-export enum AssessmentType {
-  ASSIGNMENT = 'Assignment',
-  QUIZ = 'Quiz',
-  EXAM = 'Exam',
-  PROJECT = 'Project',
-  MIDTERM = 'Midterm',
-  FINAL = 'Final'
+export interface UploadAcademicRecordsCsvDTO {
+  csvFile: File;
+  groupId: string;
+  term: string;
+  assessmentType: AssessmentType;
+  uploadingInstructorId?: string;
+  defaultStatus?: AcademicRecordStatus;
 }
 
-export enum AcademicRecordStatus {
-  PENDING = 'Pending',
-  COMPLETED = 'Completed',
-  GRADED = 'Graded'
+export interface BulkAddAcademicRecordsResultDTO {
+  totalRowsAttempted: number;
+  successfullyAddedCount: number;
+  errorMessages: string[];
 }
