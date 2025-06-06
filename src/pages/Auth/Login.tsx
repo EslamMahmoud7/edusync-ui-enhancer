@@ -221,12 +221,6 @@ const Login: React.FC = () => {
                     />
                     <span className="text-sm text-gray-600">Remember me</span>
                   </label>
-                  <button
-                    type="button"
-                    className="text-sm text-edusync-primary hover:text-edusync-secondary transition-colors duration-200"
-                  >
-                    Forgot password?
-                  </button>
                 </div>
 
                 {/* Submit Button */}
@@ -248,12 +242,6 @@ const Login: React.FC = () => {
 
               {/* Footer */}
               <div className="mt-8 text-center">
-                <p className="text-sm text-gray-600">
-                  Don't have an account?{" "}
-                  <button className="text-edusync-primary hover:text-edusync-secondary font-medium transition-colors duration-200">
-                    Sign up
-                  </button>
-                </p>
               </div>
             </div>
           </div>
