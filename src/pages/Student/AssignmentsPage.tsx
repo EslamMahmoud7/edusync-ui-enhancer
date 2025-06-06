@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, FileText, Calendar, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { Search, FileText, Calendar, Clock, CheckCircle2, AlertCircle, ExternalLink } from "lucide-react";
 import api from "../../services/api";
 import SubmitAssignmentModal from "../../components/SubmitAssignmentModal";
 
@@ -10,7 +10,10 @@ interface Assignment {
   dueDate: string;
   status: "Pending" | "Submitted" | "Graded";
   submissionDate?: string;
-  grade?: string;
+  grade?: number;
+  submissionTitle?: string;
+  submissionLink?: string;
+  instructorNotes?: string;
 }
 
 const fetchAssignments = async (): Promise<Assignment[]> => {
@@ -20,12 +23,16 @@ const fetchAssignments = async (): Promise<Assignment[]> => {
 
   const { data } = await api.get<
     Array<{
-      id: string; 
+      id: string;
       title: string;
-      description: string;
       dueDate: string;
       courseTitle: string;
-
+      submissionStatus: "Pending" | "Submitted" | "Graded";
+      submissionDate?: string;
+      grade?: number;
+      submissionTitle?: string;
+      submissionLink?: string;
+      instructorNotes?: string;
     }>
   >(`/api/assignment/student/${studentId}`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -36,7 +43,12 @@ const fetchAssignments = async (): Promise<Assignment[]> => {
     title: a.title,
     course: a.courseTitle,
     dueDate: new Date(a.dueDate).toLocaleDateString(),
-    status: "Pending", 
+    status: a.submissionStatus,
+    submissionDate: a.submissionDate ? new Date(a.submissionDate).toLocaleDateString() : undefined,
+    grade: a.grade,
+    submissionTitle: a.submissionTitle,
+    submissionLink: a.submissionLink,
+    instructorNotes: a.instructorNotes,
   }));
 };
 
@@ -47,8 +59,6 @@ export default function AssignmentsPage() {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [selected, setSelected] = useState<Assignment | null>(null);
-
-  // State for the submission modal
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [assignmentToSubmit, setAssignmentToSubmit] = useState<{ id: string; title: string } | null>(null);
 
@@ -81,16 +91,17 @@ export default function AssignmentsPage() {
     setIsSubmitModalOpen(true);
   };
 
-  const handleSubmitSuccess = (submittedAssignmentId: string) => {
-    setAssignments((prevAssignments) =>
-      prevAssignments.map((assignment) =>
-        assignment.id === submittedAssignmentId
-          ? { ...assignment, status: "Submitted", submissionDate: new Date().toLocaleDateString() }
-          : assignment
-      )
-    );
-    setIsSubmitModalOpen(false);
-    setAssignmentToSubmit(null);
+  const handleSubmitSuccess = () => {
+    setLoading(true);
+    fetchAssignments()
+      .then((data) => {
+        setAssignments(data);
+      })
+      .finally(() => {
+        setLoading(false);
+        setIsSubmitModalOpen(false);
+        setAssignmentToSubmit(null);
+      });
   };
 
   if (loading) {
@@ -106,22 +117,22 @@ export default function AssignmentsPage() {
 
   const statusCounts = {
     All: assignments.length,
-    Pending: assignments.filter(a => a.status === "Pending").length,
-    Submitted: assignments.filter(a => a.status === "Submitted").length,
-    Graded: assignments.filter(a => a.status === "Graded").length,
+    Pending: assignments.filter((a) => a.status === "Pending").length,
+    Submitted: assignments.filter((a) => a.status === "Submitted").length,
+    Graded: assignments.filter((a) => a.status === "Graded").length,
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Search and Filter UI (unchanged) */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold bg-gradient-to-r from-edusync-primary to-edusync-accent bg-clip-text text-transparent">
           Assignments
         </h1>
         <div className="text-sm text-gray-500">
-          {filtered.length} assignment{filtered.length !== 1 ? 's' : ''} found
+          {filtered.length} assignment{filtered.length !== 1 ? "s" : ""} found
         </div>
       </div>
-
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="flex flex-wrap gap-3">
           {(["All", "Pending", "Submitted", "Graded"] as const).map((status, index) => (
@@ -142,7 +153,6 @@ export default function AssignmentsPage() {
             </button>
           ))}
         </div>
-
         <div className="relative max-w-md">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             <Search className="h-5 w-5 text-gray-400" />
@@ -156,179 +166,71 @@ export default function AssignmentsPage() {
           />
         </div>
       </div>
-
+      
+      {/* Assignment Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {filtered.map((assignment, index) => {
           const getStatusConfig = (status: string) => {
             switch (status) {
-              case "Submitted":
-                return {
-                  borderColor: "border-edusync-success",
-                  bgColor: "bg-edusync-success/5",
-                  textColor: "text-edusync-success",
-                  icon: <CheckCircle2 className="w-4 h-4" />,
-                };
-              case "Graded":
-                return {
-                  borderColor: "border-edusync-accent",
-                  bgColor: "bg-edusync-accent/5",
-                  textColor: "text-edusync-accent",
-                  icon: <CheckCircle2 className="w-4 h-4" />,
-                };
-              default:
-                return {
-                  borderColor: "border-edusync-warning",
-                  bgColor: "bg-edusync-warning/5",
-                  textColor: "text-edusync-warning",
-                  icon: <AlertCircle className="w-4 h-4" />,
-                };
+              case "Submitted": return { borderColor: "border-blue-500", bgColor: "bg-blue-500/5", textColor: "text-blue-500", icon: <Clock className="w-4 h-4" /> };
+              case "Graded": return { borderColor: "border-green-500", bgColor: "bg-green-500/5", textColor: "text-green-500", icon: <CheckCircle2 className="w-4 h-4" /> };
+              default: return { borderColor: "border-orange-500", bgColor: "bg-orange-500/5", textColor: "text-orange-500", icon: <AlertCircle className="w-4 h-4" /> };
             }
           };
-
           const statusConfig = getStatusConfig(assignment.status);
 
           return (
-            <div
-              key={assignment.id}
-              className={`group bg-white/90 backdrop-blur-lg rounded-2xl shadow-soft border-l-4 ${statusConfig.borderColor} p-6 hover:shadow-elevation transition-all duration-300 transform hover:-translate-y-1 animate-scale-in`}
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              {/* Status Badge */}
+            <div key={assignment.id} className={`group bg-white/90 backdrop-blur-lg rounded-2xl shadow-soft border-l-4 ${statusConfig.borderColor} p-6 hover:shadow-elevation transition-all duration-300 transform hover:-translate-y-1 animate-scale-in`} style={{ animationDelay: `${index * 100}ms` }}>
               <div className="flex items-center justify-between mb-4">
                 <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${statusConfig.bgColor}`}>
                   {statusConfig.icon}
-                  <span className={`text-sm font-medium ${statusConfig.textColor}`}>
-                    {assignment.status}
-                  </span>
+                  <span className={`text-sm font-medium ${statusConfig.textColor}`}>{assignment.status}</span>
                 </div>
                 <FileText className="w-5 h-5 text-gray-400 group-hover:text-edusync-primary transition-colors duration-200" />
               </div>
-
               <div className="space-y-3 mb-6">
-                <h3 className="font-bold text-gray-800 text-lg leading-tight group-hover:text-edusync-primary transition-colors duration-200">
-                  {assignment.title}
-                </h3>
-
-                <div className="flex items-center gap-2 text-gray-600">
-                  <div className="w-6 h-6 bg-edusync-primary/10 rounded-full flex items-center justify-center">
-                    <FileText className="w-3 h-3 text-edusync-primary" />
-                  </div>
-                  <span className="text-sm">{assignment.course}</span>
-                </div>
-
-                <div className="flex items-center gap-2 text-gray-600">
-                  <div className="w-6 h-6 bg-edusync-secondary/10 rounded-full flex items-center justify-center">
-                    <Calendar className="w-3 h-3 text-edusync-secondary" />
-                  </div>
-                  <span className="text-sm">Due: {assignment.dueDate}</span>
-                </div>
-
-                {assignment.status !== "Pending" && assignment.submissionDate && (
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <div className="w-6 h-6 bg-edusync-success/10 rounded-full flex items-center justify-center">
-                      <Clock className="w-3 h-3 text-edusync-success" />
-                    </div>
-                    <span className="text-sm">Submitted: {assignment.submissionDate}</span>
-                  </div>
-                )}
-
-                {assignment.status === "Graded" && assignment.grade && (
-                  <div className="p-3 bg-edusync-success/10 rounded-lg">
-                    <p className="text-sm font-bold text-edusync-success">
-                      Grade: {assignment.grade}
-                    </p>
-                  </div>
-                )}
+                <h3 className="font-bold text-gray-800 text-lg leading-tight group-hover:text-edusync-primary transition-colors duration-200">{assignment.title}</h3>
+                <div className="flex items-center gap-2 text-gray-600"><div className="w-6 h-6 bg-edusync-primary/10 rounded-full flex items-center justify-center"><FileText className="w-3 h-3 text-edusync-primary" /></div><span className="text-sm">{assignment.course}</span></div>
+                <div className="flex items-center gap-2 text-gray-600"><div className="w-6 h-6 bg-edusync-secondary/10 rounded-full flex items-center justify-center"><Calendar className="w-3 h-3 text-edusync-secondary" /></div><span className="text-sm">Due: {new Date(assignment.dueDate).toLocaleDateString()}</span></div>
+                {assignment.submissionDate && <div className="flex items-center gap-2 text-gray-600"><div className="w-6 h-6 bg-blue-500/10 rounded-full flex items-center justify-center"><Clock className="w-3 h-3 text-blue-500" /></div><span className="text-sm">Submitted: {assignment.submissionDate}</span></div>}
+                {assignment.status === "Graded" && assignment.grade != null && <div className="p-3 bg-green-500/10 rounded-lg"><p className="text-sm font-bold text-green-500">Grade: {assignment.grade}</p></div>}
               </div>
-
-              <button
-                onClick={() => {
-                  if (assignment.status === "Pending") {
-                    handleOpenSubmitModal(assignment);
-                  } else {
-                    setSelected(assignment);
-                  }
-                }}
-                className="w-full py-3 bg-gradient-to-r from-edusync-primary to-edusync-secondary text-white rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105 font-medium"
-              >
-                {assignment.status === "Pending"
-                  ? "Submit Assignment"
-                  : assignment.status === "Graded"
-                  ? "View Grade"
-                  : "View Submission"}
+              <button onClick={() => { assignment.status === "Pending" ? handleOpenSubmitModal(assignment) : setSelected(assignment); }} className="w-full py-3 bg-gradient-to-r from-edusync-primary to-edusync-secondary text-white rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105 font-medium">
+                {assignment.status === "Pending" ? "Submit Assignment" : (assignment.status === "Graded" ? "View Grade" : "View Submission")}
               </button>
             </div>
           );
         })}
       </div>
 
-      {filtered.length === 0 && (
-        <div className="text-center py-12 animate-fade-in">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <FileText className="w-8 h-8 text-gray-400" />
-          </div>
-          <p className="text-gray-600">
-            {searchTerm ? `No assignments found matching "${searchTerm}"` : "No assignments found"}
-          </p>
-        </div>
-      )}
-
+      {/* Details Modal (Completely Overhauled) */}
       {selected && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-glass p-6 w-full max-w-md animate-scale-in">
-            <h2 className="text-xl font-bold text-edusync-primary mb-4">
-              {selected.status === "Graded" ? "Grade Details" : "Assignment Details"}
-            </h2>
-
-            <div className="space-y-4 mb-6">
-              <div>
-                <p className="text-sm text-gray-500">Title</p>
-                <p className="font-medium text-gray-800">{selected.title}</p>
-              </div>
-
-              <div>
-                <p className="text-sm text-gray-500">Course</p>
-                <p className="font-medium text-gray-800">{selected.course}</p>
-              </div>
-
-              <div>
-                <p className="text-sm text-gray-500">Due Date</p>
-                <p className="font-medium text-gray-800">{selected.dueDate}</p>
-              </div>
-
-              {selected.status === "Graded" && selected.grade && (
-                <div className="p-3 bg-edusync-success/10 rounded-lg">
-                  <p className="text-sm text-gray-500">Grade</p>
-                  <p className="text-lg font-bold text-edusync-success">{selected.grade}</p>
-                </div>
-              )}
-
-              {selected.submissionDate && (
-                <div>
-                  <p className="text-sm text-gray-500">Submitted</p>
-                  <p className="font-medium text-gray-800">{selected.submissionDate}</p>
-                </div>
-              )}
+            <h2 className="text-xl font-bold text-edusync-primary mb-4">{selected.status === "Graded" ? "Grade Details" : "Submission Details"}</h2>
+            <div className="space-y-4 mb-6 text-left">
+              <div><p className="text-sm text-gray-500">Assignment Title</p><p className="font-medium text-gray-800">{selected.title}</p></div>
+              <div><p className="text-sm text-gray-500">Course</p><p className="font-medium text-gray-800">{selected.course}</p></div>
+              <hr/>
+              {/* Conditional View for "Submitted" */}
+              {selected.status === 'Submitted' && (<>
+                  <div><p className="text-sm text-gray-500">Your Submission Title</p><p className="font-medium text-gray-800">{selected.submissionTitle || 'No title provided'}</p></div>
+                  <div><p className="text-sm text-gray-500">Submission Link</p><a href={selected.submissionLink} target="_blank" rel="noopener noreferrer" className="font-medium text-edusync-primary hover:underline break-all flex items-center gap-1">{selected.submissionLink} <ExternalLink size={14}/></a></div>
+              </>)}
+              {/* Conditional View for "Graded" */}
+              {selected.status === 'Graded' && (<>
+                  {selected.grade != null ? (<div className="p-3 bg-green-500/10 rounded-lg"><p className="text-sm text-gray-500">Grade</p><p className="text-lg font-bold text-green-500">{selected.grade}</p></div>) : (<div className="p-3 bg-red-500/10 rounded-lg"><p className="text-sm font-bold text-red-500">Grade not available.</p></div>)}
+                  {selected.instructorNotes && (<div className="p-3 bg-blue-500/10 rounded-lg mt-4"><p className="text-sm text-gray-500">Instructor Notes</p><p className="font-medium text-gray-800 whitespace-pre-wrap">{selected.instructorNotes}</p></div>)}
+              </>)}
             </div>
-
-            <button
-              onClick={() => setSelected(null)}
-              className="w-full py-3 bg-gray-100 hover:bg-gray-200 rounded-xl text-gray-700 font-medium transition-colors duration-200"
-            >
-              Close
-            </button>
+            <button onClick={() => setSelected(null)} className="w-full py-3 bg-gray-100 hover:bg-gray-200 rounded-xl text-gray-700 font-medium transition-colors duration-200">Close</button>
           </div>
         </div>
       )}
 
+      {/* Submit Modal (Unchanged) */}
       {isSubmitModalOpen && assignmentToSubmit && (
-        <SubmitAssignmentModal
-          isOpen={isSubmitModalOpen}
-          onClose={() => setIsSubmitModalOpen(false)}
-          assignmentId={assignmentToSubmit.id}
-          assignmentTitle={assignmentToSubmit.title}
-          onSubmitSuccess={() => handleSubmitSuccess(assignmentToSubmit.id)}
-        />
+        <SubmitAssignmentModal isOpen={isSubmitModalOpen} onClose={() => setIsSubmitModalOpen(false)} assignmentId={assignmentToSubmit.id} assignmentTitle={assignmentToSubmit.title} onSubmitSuccess={handleSubmitSuccess}/>
       )}
     </div>
   );
