@@ -158,10 +158,8 @@ export default function StudentAcademicRecords() {
               <TableRow>
                 <TableHead>Course</TableHead>
                 <TableHead>Group</TableHead>
-                <TableHead>Assessment</TableHead>
                 <TableHead>Grade</TableHead>
                 <TableHead>Term</TableHead>
-                <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -169,18 +167,12 @@ export default function StudentAcademicRecords() {
                 <TableRow key={record.id}>
                   <TableCell className="font-medium">{record.courseTitle}</TableCell>
                   <TableCell>{record.groupLabel}</TableCell>
-                  <TableCell>{getAssessmentTypeLabel(record.assessmentType)}</TableCell>
                   <TableCell>
                     <span className={`font-semibold text-lg ${getGradeColor(record.gradeValue)}`}>
                       {record.gradeValue}%
                     </span>
                   </TableCell>
                   <TableCell>{record.term}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(record.status)}`}>
-                      {getStatusLabel(record.status)}
-                    </span>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
