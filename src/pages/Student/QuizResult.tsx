@@ -73,7 +73,7 @@ export default function QuizResult() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Result not found</h2>
-          <Button onClick={() => navigate('/quizzes')}>
+          <Button onClick={() => navigate('/student/quizzes')}>
             Back to Quizzes
           </Button>
         </div>
@@ -86,7 +86,7 @@ export default function QuizResult() {
       <div className="flex items-center gap-4">
         <Button
           variant="outline"
-          onClick={() => navigate('/quizzes')}
+          onClick={() => navigate('/student/quizzes')}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Quizzes

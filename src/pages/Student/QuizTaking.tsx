@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Clock, CheckCircle, Circle, ChevronLeft, ChevronRight, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,26 +19,41 @@ export default function QuizTaking() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Use a ref to make sure the interval can be accessed for cleanup
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (quizId && user?.id) {
       initializeQuiz();
     }
+    // Cleanup timer on component unmount
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
   }, [quizId, user?.id, action]);
 
   useEffect(() => {
+    // Clear any existing timer before starting a new one
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    
+    // Only start the countdown if there is time remaining
     if (timeRemaining > 0) {
-      const timer = setInterval(() => {
+      timerRef.current = setInterval(() => {
         setTimeRemaining(prev => {
           if (prev <= 1) {
-            handleAutoSubmit();
+            if (timerRef.current) clearInterval(timerRef.current);
+            handleAutoSubmit(); // Auto-submit when time is up
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
-
-      return () => clearInterval(timer);
     }
   }, [timeRemaining]);
 
@@ -50,30 +64,37 @@ export default function QuizTaking() {
       let attemptData: StudentQuizAttemptDTO;
       
       if (action === 'resume') {
-        attemptData = await quizService.resumeQuiz(quizId, user.id);
+        attemptData = await quizService.resumeQuizAttempt(quizId, user.id);
       } else {
-        attemptData = await quizService.startQuiz(quizId, user.id);
+        attemptData = await quizService.startQuizAttempt(quizId, user.id);
       }
 
       setAttempt(attemptData);
       
-      // Initialize answers from existing answers if resuming
       const initialAnswers: Record<string, string> = {};
       attemptData.answers?.forEach(answer => {
-        initialAnswers[answer.questionId] = answer.selectedOptionId;
+        if(answer.selectedOptionId) {
+          initialAnswers[answer.questionId] = answer.selectedOptionId;
+        }
       });
       setAnswers(initialAnswers);
 
-      // Calculate time remaining
-      const startTime = new Date(attemptData.startTime);
-      const durationMs = attemptData.durationMinutes * 60 * 1000;
-      const elapsed = Date.now() - startTime.getTime();
-      const remaining = Math.max(0, Math.floor((durationMs - elapsed) / 1000));
-      setTimeRemaining(remaining);
+      // ✅ Corrected Timer Logic
+      if (action === 'resume') {
+        // For resuming, calculate the time left based on the original start time
+        const startTime = new Date(attemptData.startTime);
+        const durationMs = attemptData.durationMinutes * 60 * 1000;
+        const elapsedMs = Date.now() - startTime.getTime();
+        const remainingSeconds = Math.max(0, Math.floor((durationMs - elapsedMs) / 1000));
+        setTimeRemaining(remainingSeconds);
+      } else {
+        // For a new quiz, just set the timer to the full duration
+        setTimeRemaining(attemptData.durationMinutes * 60);
+      }
 
     } catch (error) {
       console.error('Error initializing quiz:', error);
-      alert('Error starting quiz');
+      alert('Error starting or resuming quiz. You may not have attempts left or the quiz is not available.');
       navigate('/student/quizzes');
     } finally {
       setLoading(false);
@@ -86,58 +107,59 @@ export default function QuizTaking() {
       [questionId]: optionId
     }));
   };
+  
+  const submitQuizFlow = async () => {
+    // Prevent double submissions
+    if (isSubmitting || !attempt || !user?.id) return;
+    setIsSubmitting(true);
+    
+    // Stop the timer
+    if (timerRef.current) {
+        clearInterval(timerRef.current);
+    }
 
-  const handleSubmit = async () => {
-    if (!attempt || !user?.id) return;
-
-    if (confirm('Are you sure you want to submit your quiz? This action cannot be undone.')) {
-      try {
-        const submission: StudentQuizSubmissionDTO = {
-          attemptId: attempt.attemptId,
-          answers: Object.entries(answers).map(([questionId, selectedOptionId]) => ({
-            questionId,
-            selectedOptionId
-          }))
-        };
-
-        const result = await quizService.submitQuiz(submission);
-        navigate(`/student/quiz-result/${result.attemptId}`);
-      } catch (error) {
-        console.error('Error submitting quiz:', error);
-        alert('Error submitting quiz');
-      }
+    try {
+      const submission: StudentQuizSubmissionDTO = {
+        requestingStudentId: user.id,
+        attemptId: attempt.attemptId,
+        answers: Object.entries(answers).map(([questionId, selectedOptionId]) => ({
+          questionId,
+          selectedOptionId
+        }))
+      };
+      const result = await quizService.submitQuizAttempt(submission);
+      navigate(`/student/quiz-result/${result.attemptId}`);
+    } catch (error) {
+      console.error('Error submitting quiz:', error);
+      alert('Error submitting quiz');
+      setIsSubmitting(false); // Allow re-submission on error
     }
   };
 
+  const handleSubmit = () => {
+    if (confirm('Are you sure you want to submit your quiz? This action cannot be undone.')) {
+      submitQuizFlow();
+    }
+  };
+  
   const handleAutoSubmit = () => {
-    if (!attempt || !user?.id) return;
-
-    const submission: StudentQuizSubmissionDTO = {
-      attemptId: attempt.attemptId,
-      answers: Object.entries(answers).map(([questionId, selectedOptionId]) => ({
-        questionId,
-        selectedOptionId
-      }))
-    };
-
-    quizService.submitQuiz(submission).then(result => {
-      navigate(`/student/quiz-result/${result.attemptId}`);
-    }).catch(error => {
-      console.error('Error auto-submitting quiz:', error);
-    });
+    alert("Time's up! Your quiz will now be submitted automatically.");
+    submitQuizFlow();
   };
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
   const getProgress = () => {
     if (!attempt) return 0;
-    const answeredQuestions = Object.keys(answers).length;
+    const answeredQuestions = Object.values(answers).filter(Boolean).length;
     return (answeredQuestions / attempt.questions.length) * 100;
   };
+
+  // ... (rest of your JSX code remains the same)
 
   if (loading) {
     return (
@@ -151,7 +173,7 @@ export default function QuizTaking() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Quiz not found</h2>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Could Not Load Quiz</h2>
           <Button onClick={() => navigate('/student/quizzes')}>
             Back to Quizzes
           </Button>
@@ -167,7 +189,7 @@ export default function QuizTaking() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b">
+      <div className="bg-white dark:bg-gray-800 shadow-sm border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div>
@@ -177,7 +199,7 @@ export default function QuizTaking() {
               <div className="mt-2">
                 <Progress value={getProgress()} className="w-64" />
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {Object.keys(answers).length} of {attempt.questions.length} questions answered
+                  {Object.values(answers).filter(Boolean).length} of {attempt.questions.length} questions answered
                 </p>
               </div>
             </div>
@@ -197,7 +219,7 @@ export default function QuizTaking() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Question Navigation Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sticky top-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sticky top-24">
               <h3 className="font-semibold mb-4">Questions</h3>
               <div className="grid grid-cols-5 lg:grid-cols-4 gap-2">
                 {attempt.questions.map((question, index) => (
@@ -213,9 +235,6 @@ export default function QuizTaking() {
                     }`}
                   >
                     {index + 1}
-                    {answers[question.id] && (
-                      <CheckCircle className="h-3 w-3 ml-1" />
-                    )}
                   </button>
                 ))}
               </div>
@@ -245,20 +264,18 @@ export default function QuizTaking() {
                   <button
                     key={option.id}
                     onClick={() => handleAnswerSelect(currentQuestion.id, option.id)}
-                    className={`w-full p-4 rounded-lg border-2 text-left transition-colors ${
+                    className={`w-full p-4 rounded-lg border-2 text-left transition-colors flex items-center ${
                       answers[currentQuestion.id] === option.id
                         ? 'border-edusync-primary bg-edusync-primary/10'
-                        : 'border-gray-200 bg-gray-50 hover:border-edusync-primary hover:bg-edusync-primary/5'
+                        : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 hover:border-edusync-primary'
                     }`}
                   >
-                    <div className="flex items-center">
-                      {answers[currentQuestion.id] === option.id ? (
-                        <CheckCircle className="h-5 w-5 text-edusync-primary mr-3" />
-                      ) : (
-                        <Circle className="h-5 w-5 text-gray-400 mr-3" />
-                      )}
-                      <span className="text-gray-800 dark:text-white">{option.text}</span>
-                    </div>
+                    {answers[currentQuestion.id] === option.id ? (
+                      <CheckCircle className="h-5 w-5 text-edusync-primary mr-3 flex-shrink-0" />
+                    ) : (
+                      <Circle className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
+                    )}
+                    <span className="text-gray-800 dark:text-white">{option.text}</span>
                   </button>
                 ))}
               </div>
@@ -276,10 +293,11 @@ export default function QuizTaking() {
                 {isLastQuestion ? (
                   <Button
                     onClick={handleSubmit}
-                    className="bg-edusync-success hover:bg-green-600"
+                    disabled={isSubmitting}
+                    className="bg-green-500 hover:bg-green-600 text-white"
                   >
                     <Send className="h-4 w-4 mr-2" />
-                    Submit Quiz
+                    {isSubmitting ? 'Submitting...' : 'Submit Quiz'}
                   </Button>
                 ) : (
                   <Button

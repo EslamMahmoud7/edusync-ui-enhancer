@@ -49,7 +49,7 @@
     },
     {
       label: "Quizzes",
-      path: "/quizzes",
+      path: "student/quizzes",
       icon: <FileQuestion size={18} />,
     },
     {

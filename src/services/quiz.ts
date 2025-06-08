@@ -1,4 +1,3 @@
-
 import api from './api';
 import type { 
   QuizDTO, 
@@ -13,53 +12,38 @@ import type {
 } from '../types/quiz';
 
 export const quizService = {
-  // Instructor endpoints
+  // --- INSTRUCTOR ENDPOINTS ---
+
   createQuiz: async (data: CreateQuizDTO): Promise<QuizDTO> => {
     const response = await api.post('/api/Quiz', data);
     return response.data;
   },
 
   updateQuiz: async (quizId: string, data: UpdateQuizDTO): Promise<QuizDTO> => {
-    const userString = localStorage.getItem('eduSyncUser');
-    const user = userString ? JSON.parse(userString) : null;
-    const dataWithInstructor = { ...data, requestingInstructorId: user?.id };
-    
-    const response = await api.put(`/api/Quiz/${quizId}`, dataWithInstructor);
+    const response = await api.put(`/api/Quiz/${quizId}`, data);
     return response.data;
   },
 
-  deleteQuiz: async (quizId: string): Promise<void> => {
-    const userString = localStorage.getItem('eduSyncUser');
-    const user = userString ? JSON.parse(userString) : null;
-    
-    await api.delete(`/api/Quiz/${quizId}?instructorId=${user?.id}`);
+  deleteQuiz: async (quizId: string, instructorId: string): Promise<void> => {
+    await api.delete(`/api/Quiz/${quizId}?instructorId=${instructorId}`);
   },
 
-  getQuizForInstructor: async (quizId: string): Promise<QuizDTO> => {
-    const userString = localStorage.getItem('eduSyncUser');
-    const user = userString ? JSON.parse(userString) : null;
-    
-    const response = await api.get(`/api/Quiz/${quizId}/instructor-view?instructorId=${user?.id}`);
+  getQuizForInstructor: async (quizId: string, instructorId: string): Promise<QuizDTO> => {
+    const response = await api.get(`/api/Quiz/${quizId}/instructor-view?instructorId=${instructorId}`);
     return response.data;
   },
 
-  getMyQuizzesAsInstructor: async (): Promise<QuizDTO[]> => {
-    const userString = localStorage.getItem('eduSyncUser');
-    const user = userString ? JSON.parse(userString) : null;
-    
-    const response = await api.get(`/api/Quiz/instructor/my-quizzes?instructorId=${user?.id}`);
+  getMyQuizzesAsInstructor: async (instructorId: string): Promise<QuizDTO[]> => {
+    const response = await api.get(`/api/Quiz/instructor/my-quizzes?instructorId=${instructorId}`);
     return response.data;
   },
 
   addQuizModel: async (data: UploadQuizModelCsvDTO): Promise<QuizModelDTO> => {
-    const userString = localStorage.getItem('eduSyncUser');
-    const user = userString ? JSON.parse(userString) : null;
-    
     const formData = new FormData();
     formData.append('quizId', data.quizId);
     formData.append('modelIdentifier', data.modelIdentifier);
     formData.append('csvFile', data.csvFile);
-    formData.append('requestingInstructorId', user?.id || '');
+    formData.append('requestingInstructorId', data.requestingInstructorId);
     
     const response = await api.post('/api/Quiz/models', formData, {
       headers: {
@@ -69,61 +53,40 @@ export const quizService = {
     return response.data;
   },
 
-  getAllAttemptsForQuiz: async (quizId: string): Promise<QuizAttemptResultDTO[]> => {
-    const userString = localStorage.getItem('eduSyncUser');
-    const user = userString ? JSON.parse(userString) : null;
-    
-    const response = await api.get(`/api/Quiz/${quizId}/attempts/all?instructorId=${user?.id}`);
+  getAllAttemptsForQuiz: async (quizId: string, instructorId: string): Promise<QuizAttemptResultDTO[]> => {
+    const response = await api.get(`/api/Quiz/${quizId}/attempts/all?instructorId=${instructorId}`);
     return response.data;
   },
 
-  getStudentAttemptForInstructor: async (attemptId: string): Promise<QuizAttemptResultDTO> => {
-    const userString = localStorage.getItem('eduSyncUser');
-    const user = userString ? JSON.parse(userString) : null;
-    
-    const response = await api.get(`/api/Quiz/attempts/${attemptId}/instructor-view?instructorId=${user?.id}`);
+  getStudentAttemptForInstructor: async (attemptId: string, instructorId: string): Promise<QuizAttemptResultDTO> => {
+    const response = await api.get(`/api/Quiz/attempts/${attemptId}/instructor-view?instructorId=${instructorId}`);
     return response.data;
   },
 
-  // Student endpoints
-  getAvailableQuizzesForStudent: async (): Promise<StudentQuizListItemDTO[]> => {
-    const userString = localStorage.getItem('eduSyncUser');
-    const user = userString ? JSON.parse(userString) : null;
-    
-    const response = await api.get(`/api/Quiz/student/available?studentId=${user?.id}`);
+  // --- STUDENT ENDPOINTS ---
+
+  getAvailableQuizzes: async (studentId: string): Promise<StudentQuizListItemDTO[]> => {
+    const response = await api.get(`/api/Quiz/student/available?studentId=${studentId}`);
     return response.data;
   },
-
-  startQuizAttempt: async (quizId: string): Promise<StudentQuizAttemptDTO> => {
-    const userString = localStorage.getItem('eduSyncUser');
-    const user = userString ? JSON.parse(userString) : null;
-    
-    const response = await api.post(`/api/Quiz/${quizId}/start`, { studentId: user?.id });
+  
+  startQuizAttempt: async (quizId: string, studentId: string): Promise<StudentQuizAttemptDTO> => {
+    const response = await api.post(`/api/Quiz/${quizId}/start`, { studentId });
     return response.data;
   },
-
-  resumeQuizAttempt: async (quizId: string): Promise<StudentQuizAttemptDTO> => {
-    const userString = localStorage.getItem('eduSyncUser');
-    const user = userString ? JSON.parse(userString) : null;
-    
-    const response = await api.get(`/api/Quiz/${quizId}/resume?studentId=${user?.id}`);
+  
+  resumeQuizAttempt: async (quizId: string, studentId: string): Promise<StudentQuizAttemptDTO> => {
+    const response = await api.get(`/api/Quiz/${quizId}/resume?studentId=${studentId}`);
     return response.data;
   },
-
+  
   submitQuizAttempt: async (submission: StudentQuizSubmissionDTO): Promise<QuizAttemptResultDTO> => {
-    const userString = localStorage.getItem('eduSyncUser');
-    const user = userString ? JSON.parse(userString) : null;
-    
-    const submissionWithStudent = { ...submission, requestingStudentId: user?.id };
-    const response = await api.post('/api/Quiz/attempt/submit', submissionWithStudent);
+    const response = await api.post('/api/Quiz/attempt/submit', submission);
     return response.data;
   },
-
-  getQuizAttemptResult: async (attemptId: string): Promise<QuizAttemptResultDTO> => {
-    const userString = localStorage.getItem('eduSyncUser');
-    const user = userString ? JSON.parse(userString) : null;
-    
-    const response = await api.get(`/api/Quiz/attempt/${attemptId}/result?studentId=${user?.id}`);
+  
+  getQuizAttemptResult: async (attemptId: string, studentId: string): Promise<QuizAttemptResultDTO> => {
+    const response = await api.get(`/api/Quiz/attempt/${attemptId}/result?studentId=${studentId}`);
     return response.data;
   }
 };

@@ -70,11 +70,11 @@ const App = () => (
                         <AssignmentsPage />
                       </RoleGuard>
                     } />
-                    <Route path="quizzes" element={
-                      <RoleGuard allowedRoles={[0, 1]}>
-                        <StudentQuizzes />
-                      </RoleGuard>
-                    } />
+                    <Route path="student/quizzes" element={
+                      <RoleGuard allowedRoles={[0, 1]}>
+                        <StudentQuizzes />
+                      </RoleGuard>
+                    } />
                     <Route path="student/quiz-info/:quizId" element={
                       <RoleGuard allowedRoles={[0, 1]}>
                         <QuizTaking />

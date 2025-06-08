@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, CheckCircle, Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import type { QuizDTO } from '../types/quiz';
 
 interface QuizModelsSectionProps {
   quiz: QuizDTO;
-  onModelAdded: () => void;
+  onModelAdded: () => void; // This prop is not used here but good to keep for consistency
 }
 
 export default function QuizModelsSection({ quiz }: QuizModelsSectionProps) {
@@ -24,7 +23,8 @@ export default function QuizModelsSection({ quiz }: QuizModelsSectionProps) {
     });
   };
 
-  if (!quiz.models || quiz.models.length === 0) {
+  // ✅ Corrected: Check for quiz.quizModels instead of quiz.models
+  if (!quiz.quizModels || quiz.quizModels.length === 0) {
     return (
       <div className="text-center py-8">
         <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -37,7 +37,8 @@ export default function QuizModelsSection({ quiz }: QuizModelsSectionProps) {
 
   return (
     <div className="space-y-4">
-      {quiz.models.map((model) => (
+      {/* ✅ Corrected: Map over quiz.quizModels */}
+      {quiz.quizModels.map((model) => (
         <div key={model.id} className="border border-gray-200 dark:border-gray-700 rounded-lg">
           <Button
             variant="ghost"

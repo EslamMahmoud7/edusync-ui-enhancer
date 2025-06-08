@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, Users, BookOpen, Clock, FileText, Badge } from 'lucide-react';
+import { Plus, Calendar, Users, BookOpen, Clock, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { quizService } from '../../services/quiz';
 import type { QuizDTO } from '../../types/quiz';
@@ -13,12 +13,28 @@ export default function InstructorQuizzes() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchQuizzes();
-  }, []);
+    // ✅ 1. Get the instructor ID directly from localStorage.
+    const userString = localStorage.getItem('eduSyncUser');
+    if (userString) {
+      const user = JSON.parse(userString);
+      if (user?.id) {
+        // ✅ 2. If an ID exists, call fetchQuizzes with it.
+        fetchQuizzes(user.id);
+      } else {
+        console.error("User object in localStorage is missing an ID.");
+        setLoading(false);
+      }
+    } else {
+      console.error("User not found in localStorage. Please log in.");
+      setLoading(false); // Stop loading if no user is found
+    }
+  }, []); // ✅ 3. Run only once when the component mounts.
 
-  const fetchQuizzes = async () => {
+  const fetchQuizzes = async (instructorId: string) => {
+    setLoading(true);
     try {
-      const data = await quizService.getMyQuizzesAsInstructor();
+      // ✅ 4. Pass the instructorId to the service call.
+      const data = await quizService.getMyQuizzesAsInstructor(instructorId);
       setQuizzes(data);
     } catch (error) {
       console.error('Error fetching quizzes:', error);
@@ -104,7 +120,7 @@ export default function InstructorQuizzes() {
 
               <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <FileText className="h-4 w-4" />
-                <span>{quiz.numberOfModels} model(s)</span>
+                <span>{quiz.quizModels.length} model(s)</span>
               </div>
 
               <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
@@ -122,7 +138,7 @@ export default function InstructorQuizzes() {
         ))}
       </div>
 
-      {quizzes.length === 0 && (
+      {!loading && quizzes.length === 0 && (
         <div className="text-center py-12">
           <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">

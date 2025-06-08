@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { X, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { quizService } from '../services/quiz';
 import { groupService } from '../services/group';
 import type { CreateQuizDTO, QuizDTO } from '../types/quiz';
-import type { GroupDTO } from '../types/group';
+import type { GroupDTO } from '../types/group'; // Make sure you have this type defined
 
 interface CreateQuizModalProps {
   isOpen: boolean;
@@ -19,32 +18,46 @@ interface CreateQuizModalProps {
   onQuizCreated: (quiz: QuizDTO) => void;
 }
 
+const getInstructorId = () => {
+  const userString = localStorage.getItem('eduSyncUser');
+  if (userString) {
+    const user = JSON.parse(userString);
+    return user.id || '';
+  }
+  return '';
+};
+
+const initialFormData: CreateQuizDTO = {
+  requestingInstructorId: '', // Corrected: Use the new field
+  title: '',
+  description: '',
+  groupId: '',
+  dueDate: '',
+  durationMinutes: 60,
+  maxAttempts: 1,
+  shuffleQuestions: false,
+  isPublished: false,
+};
+
 export default function CreateQuizModal({ isOpen, onClose, onQuizCreated }: CreateQuizModalProps) {
-  const [formData, setFormData] = useState<CreateQuizDTO>({
-    title: '',
-    description: '',
-    groupId: '',
-    dueDate: '',
-    durationMinutes: 60,
-    maxAttempts: 1,
-    shuffleQuestions: false,
-    isPublished: false
-  });
+  const [formData, setFormData] = useState<CreateQuizDTO>(initialFormData);
   const [groups, setGroups] = useState<GroupDTO[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
+      // Set the instructor ID when the modal opens
+      setFormData(prev => ({ ...prev, requestingInstructorId: getInstructorId() }));
       fetchGroups();
     }
   }, [isOpen]);
 
   const fetchGroups = async () => {
     try {
-      const userString = localStorage.getItem('eduSyncUser');
-      if (userString) {
-        const user = JSON.parse(userString);
-        const data = await groupService.getByInstructor(user.id);
+      const instructorId = getInstructorId();
+      if (instructorId) {
+        // Assuming your groupService.getByInstructor takes the instructorId
+        const data = await groupService.getByInstructor(instructorId); 
         setGroups(data);
       }
     } catch (error) {
@@ -54,16 +67,17 @@ export default function CreateQuizModal({ isOpen, onClose, onQuizCreated }: Crea
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.requestingInstructorId) {
+      alert("Could not find instructor ID. Please log in again.");
+      return;
+    }
     setLoading(true);
 
     try {
-      const userString = localStorage.getItem('eduSyncUser');
-      if (userString) {
-        const user = JSON.parse(userString);
-        const quiz = await quizService.createQuiz({ ...formData, instructorId: user.id });
-        onQuizCreated(quiz);
-        handleClose();
-      }
+      // The complete DTO is already in the formData state
+      const quiz = await quizService.createQuiz(formData);
+      onQuizCreated(quiz);
+      handleClose();
     } catch (error) {
       console.error('Error creating quiz:', error);
       alert('Error creating quiz');
@@ -73,16 +87,7 @@ export default function CreateQuizModal({ isOpen, onClose, onQuizCreated }: Crea
   };
 
   const handleClose = () => {
-    setFormData({
-      title: '',
-      description: '',
-      groupId: '',
-      dueDate: '',
-      durationMinutes: 60,
-      maxAttempts: 1,
-      shuffleQuestions: false,
-      isPublished: false
-    });
+    setFormData(initialFormData); // Reset to initial state
     onClose();
   };
 
@@ -121,9 +126,10 @@ export default function CreateQuizModal({ isOpen, onClose, onQuizCreated }: Crea
                 <SelectValue placeholder="Select a group" />
               </SelectTrigger>
               <SelectContent>
+                {/* Corrected: Display group.courseTitle */}
                 {groups.map((group) => (
                   <SelectItem key={group.id} value={group.id}>
-                    {group.name}
+                    {group.courseTitle} 
                   </SelectItem>
                 ))}
               </SelectContent>

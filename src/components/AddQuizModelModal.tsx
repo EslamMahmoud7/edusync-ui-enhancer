@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { X, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -29,13 +28,17 @@ export default function AddQuizModelModal({ isOpen, onClose, quizId, onModelAdde
     setLoading(true);
 
     try {
+      // ✅ Corrected: Create the full data object here
       const uploadData: UploadQuizModelCsvDTO = {
-        modelIdentifier,
-        instructorId: user.id,
-        csvFile
+        requestingInstructorId: user.id,
+        quizId: quizId, // Include the quizId from props
+        modelIdentifier: modelIdentifier,
+        csvFile: csvFile
       };
 
-      await quizService.uploadQuizModel(quizId, uploadData);
+      // ✅ Corrected: Call the correct function name 'addQuizModel'
+      await quizService.addQuizModel(uploadData);
+      
       onModelAdded();
       handleClose();
     } catch (error) {

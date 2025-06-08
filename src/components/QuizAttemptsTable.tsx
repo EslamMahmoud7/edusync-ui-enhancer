@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,14 +6,21 @@ import { Badge } from '@/components/ui/badge';
 import type { QuizAttemptResultDTO } from '../types/quiz';
 import { useNavigate } from 'react-router-dom';
 
-interface QuizAttemptsTableProps {
-  attempts: QuizAttemptResultDTO[];
-}
+// ✅ 1. Create a mapping for the enum numbers
+const statusMap: { [key: number]: string } = {
+  0: 'InProgress',
+  1: 'Submitted',
+  2: 'Graded',
+  3: 'TimeExpired',
+};
 
 export default function QuizAttemptsTable({ attempts }: QuizAttemptsTableProps) {
   const navigate = useNavigate();
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | undefined) => {
+    // Add a check for undefined status
+    if (!status) return 'bg-gray-100 text-gray-800';
+    
     switch (status.toLowerCase()) {
       case 'submitted':
         return 'bg-blue-100 text-blue-800';
@@ -22,12 +28,14 @@ export default function QuizAttemptsTable({ attempts }: QuizAttemptsTableProps) 
         return 'bg-green-100 text-green-800';
       case 'inprogress':
         return 'bg-yellow-100 text-yellow-800';
+      case 'timeexpired':
+        return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
 
-  if (attempts.length === 0) {
+  if (!attempts || attempts.length === 0) {
     return (
       <div className="text-center py-8">
         <p className="text-gray-600 dark:text-gray-400">No attempts yet</p>
@@ -47,38 +55,34 @@ export default function QuizAttemptsTable({ attempts }: QuizAttemptsTableProps) 
         </TableRow>
       </TableHeader>
       <TableBody>
-        {attempts.map((attempt) => (
-          <TableRow key={attempt.attemptId}>
-            <TableCell>
-              <div className="font-medium">{attempt.studentName}</div>
-            </TableCell>
-            <TableCell>
-              <div className="text-sm">
-                {new Date(attempt.startTime).toLocaleString()}
-              </div>
-            </TableCell>
-            <TableCell>
-              <div className="font-medium">
-                {attempt.score}/{attempt.totalPointsPossible}
-              </div>
-            </TableCell>
-            <TableCell>
-              <Badge className={getStatusColor(attempt.status)}>
-                {attempt.status}
-              </Badge>
-            </TableCell>
-            <TableCell>
-              <Button
-                size="sm"
-                onClick={() => navigate(`/instructor/quiz-attempt/${attempt.attemptId}`)}
-                className="bg-edusync-primary hover:bg-edusync-secondary"
-              >
-                <Eye className="h-4 w-4 mr-1" />
-                View Details
-              </Button>
-            </TableCell>
-          </TableRow>
-        ))}
+        {attempts.map((attempt) => {
+          // ✅ 2. Convert the status number to its string name
+          const statusText = statusMap[attempt.status as number] || 'Unknown';
+
+          return (
+            <TableRow key={attempt.attemptId}>
+              <TableCell>
+                <div className="font-medium">{attempt.studentName}</div>
+              </TableCell>
+              <TableCell>
+                <div className="text-sm">
+                  {new Date(attempt.startTime).toLocaleString()}
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="font-medium">
+                  {attempt.score ?? 'N/A'}/{attempt.totalPointsPossible}
+                </div>
+              </TableCell>
+              <TableCell>
+                {/* ✅ 3. Use the converted string for both display and color */}
+                <Badge className={getStatusColor(statusText)}>
+                  {statusText}
+                </Badge>
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );

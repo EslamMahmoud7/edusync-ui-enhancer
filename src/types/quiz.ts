@@ -1,4 +1,3 @@
-
 export interface QuizDTO {
   id: string;
   title: string;
@@ -11,12 +10,13 @@ export interface QuizDTO {
   shuffleQuestions: boolean;
   isPublished: boolean;
   numberOfModels: number;
-  models: QuizModelDTO[];
+  quizModels: QuizModelDTO[]; 
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateQuizDTO {
+  requestingInstructorId: string;
   title: string;
   description: string;
   groupId: string;
@@ -46,6 +46,7 @@ export interface QuizModelDTO {
 }
 
 export interface UploadQuizModelCsvDTO {
+  requestingInstructorId: string;
   quizId: string;
   modelIdentifier: string;
   csvFile: File;
@@ -64,15 +65,14 @@ export interface QuestionOptionDTO {
   isCorrect: boolean;
 }
 
-export interface StudentQuizListItemDTO {
+export interface StudentQuizAttemptDTO {
+  attemptId: string;
   quizId: string;
-  title: string;
-  courseTitle: string;
-  description: string;
-  dueDate: string;
-  maxAttempts: number;
-  attemptsMade: number;
-  lastAttemptStatus: string;
+  quizTitle: string;
+  durationMinutes: number;
+  startTime: string;
+  questions: QuestionDTO[];
+  answers?: { questionId: string; selectedOptionId: string }[];
 }
 
 export interface StudentQuizAttemptDTO {
@@ -91,6 +91,7 @@ export interface StudentAnswerDTO {
 }
 
 export interface StudentQuizSubmissionDTO {
+  requestingStudentId: string;
   attemptId: string;
   answers: StudentAnswerDTO[];
 }

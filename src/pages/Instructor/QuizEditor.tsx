@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit, Trash2, Plus, Users, FileText, Calendar, Clock } from 'lucide-react';
@@ -45,7 +44,8 @@ export default function QuizEditor() {
   const fetchAttempts = async () => {
     try {
       if (quizId && user?.id) {
-        const data = await quizService.getQuizAttempts(quizId, user.id);
+        // ✅ Corrected: Called the correct function 'getAllAttemptsForQuiz'
+        const data = await quizService.getAllAttemptsForQuiz(quizId, user.id);
         setAttempts(data);
       }
     } catch (error) {
@@ -73,7 +73,7 @@ export default function QuizEditor() {
   };
 
   const handleModelAdded = () => {
-    fetchQuizData();
+    fetchQuizData(); // Refetch quiz data to update models list
     setIsAddModelModalOpen(false);
   };
 
@@ -135,7 +135,7 @@ export default function QuizEditor() {
               </div>
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-edusync-primary" />
-                <span className="text-sm">{quiz.numberOfModels} model(s)</span>
+                <span className="text-sm">{quiz.quizModels.length} model(s)</span>
               </div>
             </div>
           </div>
@@ -164,7 +164,7 @@ export default function QuizEditor() {
             <TabsTrigger value="attempts">Student Attempts</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="models" className="space-y-4">
+          <TabsContent value="models" className="space-y-4 pt-4">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold">Quiz Models</h3>
               <Button
@@ -178,7 +178,7 @@ export default function QuizEditor() {
             <QuizModelsSection quiz={quiz} onModelAdded={fetchQuizData} />
           </TabsContent>
           
-          <TabsContent value="attempts" className="space-y-4">
+          <TabsContent value="attempts" className="space-y-4 pt-4">
             <h3 className="text-lg font-semibold">Student Attempts</h3>
             <QuizAttemptsTable attempts={attempts} />
           </TabsContent>

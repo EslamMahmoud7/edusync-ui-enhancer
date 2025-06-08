@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Users, Play, RotateCcw, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,12 +13,20 @@ export default function StudentQuizzes() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchQuizzes();
-  }, []);
+    // We only want to fetch if the user object is available
+    if (user?.id) {
+      fetchQuizzes();
+    } else {
+      // If no user, stop loading and show empty state
+      setLoading(false);
+    }
+  }, [user]); // Re-run when the user object becomes available
 
   const fetchQuizzes = async () => {
+    setLoading(true); // Set loading true at the start of fetch
     try {
       if (user?.id) {
+        // ✅ Corrected: Call the renamed service function
         const data = await quizService.getAvailableQuizzes(user.id);
         setQuizzes(data);
       }
@@ -31,26 +38,29 @@ export default function StudentQuizzes() {
   };
 
   const getActionButton = (quiz: StudentQuizListItemDTO) => {
-    const { lastAttemptStatus, attemptsMade, maxAttempts } = quiz;
+    const { lastAttemptStatus, attemptsMade, maxAttempts, lastAttemptId } = quiz;
 
+    // This case covers when all attempts are used up.
     if (attemptsMade >= maxAttempts && lastAttemptStatus !== 'InProgress') {
       return (
         <Button
-          onClick={() => navigate(`/student/quiz-result/${quiz.lastAttemptId}`)}
+          onClick={() => navigate(`/student/quiz-result/${lastAttemptId}`)}
           variant="outline"
           className="w-full"
+          disabled={!lastAttemptId} // Disable if there's no attempt to view
         >
           <Eye className="h-4 w-4 mr-2" />
           View Results
         </Button>
       );
     }
-
+    
+    // Resume an attempt that was started but not submitted
     if (lastAttemptStatus === 'InProgress') {
       return (
         <Button
-          onClick={() => navigate(`/student/quiz-info/${quiz.id}?action=resume`)}
-          className="w-full bg-edusync-warning hover:bg-orange-600"
+          onClick={() => navigate(`/student/quiz-info/${quiz.quizId}?action=resume`)}
+          className="w-full bg-yellow-500 hover:bg-yellow-600 text-white"
         >
           <RotateCcw className="h-4 w-4 mr-2" />
           Resume Quiz
@@ -58,33 +68,34 @@ export default function StudentQuizzes() {
       );
     }
 
-    if (lastAttemptStatus === 'Submitted' || lastAttemptStatus === 'Graded') {
+    // If the last attempt is finished, but more are available
+    if ((lastAttemptStatus === 'Submitted' || lastAttemptStatus === 'Graded') && attemptsMade < maxAttempts) {
       return (
         <div className="space-y-2">
           <Button
-            onClick={() => navigate(`/student/quiz-result/${quiz.lastAttemptId}`)}
+            onClick={() => navigate(`/student/quiz-result/${lastAttemptId}`)}
             variant="outline"
             className="w-full"
+            disabled={!lastAttemptId}
           >
             <Eye className="h-4 w-4 mr-2" />
             View Last Result
           </Button>
-          {attemptsMade < maxAttempts && (
-            <Button
-              onClick={() => navigate(`/student/quiz-info/${quiz.id}?action=start`)}
-              className="w-full bg-edusync-primary hover:bg-edusync-secondary"
-            >
-              <Play className="h-4 w-4 mr-2" />
-              Start New Attempt
-            </Button>
-          )}
+          <Button
+            onClick={() => navigate(`/student/quiz-info/${quiz.quizId}?action=start`)}
+            className="w-full bg-edusync-primary hover:bg-edusync-secondary"
+          >
+            <Play className="h-4 w-4 mr-2" />
+            Start New Attempt
+          </Button>
         </div>
       );
     }
-
+    
+    // Default case: No attempts made yet
     return (
       <Button
-        onClick={() => navigate(`/student/quiz-info/${quiz.id}?action=start`)}
+        onClick={() => navigate(`/student/quiz-info/${quiz.quizId}?action=start`)}
         className="w-full bg-edusync-primary hover:bg-edusync-secondary"
       >
         <Play className="h-4 w-4 mr-2" />
@@ -113,37 +124,39 @@ export default function StudentQuizzes() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {quizzes.map((quiz) => (
           <div
-            key={quiz.id}
-            className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 dark:border-gray-700/50 p-6 hover:shadow-elevation transition-all duration-300"
+            key={quiz.quizId}
+            className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 dark:border-gray-700/50 p-6 flex flex-col hover:shadow-elevation transition-all duration-300"
           >
-            <div className="mb-4">
-              <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
-                {quiz.title}
-              </h3>
-              <p className="text-sm text-edusync-primary font-medium mb-2">
-                {quiz.courseTitle}
-              </p>
-              <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3">
-                {quiz.description}
-              </p>
-            </div>
-
-            <div className="space-y-3 mb-6">
-              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <Calendar className="h-4 w-4" />
-                <span>Due: {new Date(quiz.dueDate).toLocaleDateString()}</span>
+            <div className="flex-grow">
+              <div className="mb-4">
+                <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
+                  {quiz.title}
+                </h3>
+                <p className="text-sm text-edusync-primary font-medium mb-2">
+                  {quiz.courseTitle}
+                </p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3">
+                  {quiz.description}
+                </p>
               </div>
 
-              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <Clock className="h-4 w-4" />
-                <span>{quiz.durationMinutes} minutes</span>
-              </div>
+              <div className="space-y-3 mb-6">
+                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <Calendar className="h-4 w-4" />
+                  <span>Due: {new Date(quiz.dueDate).toLocaleDateString()}</span>
+                </div>
 
-              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <Users className="h-4 w-4" />
-                <span>
-                  Attempts: {quiz.attemptsMade}/{quiz.maxAttempts}
-                </span>
+                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <Clock className="h-4 w-4" />
+                  <span>{quiz.durationMinutes} minutes</span>
+                </div>
+
+                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <Users className="h-4 w-4" />
+                  <span>
+                    Attempts: {quiz.attemptsMade}/{quiz.maxAttempts}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -154,14 +167,14 @@ export default function StudentQuizzes() {
         ))}
       </div>
 
-      {quizzes.length === 0 && (
-        <div className="text-center py-12">
+      {!loading && quizzes.length === 0 && (
+        <div className="text-center py-12 col-span-full">
           <Clock className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             No quizzes available
           </h3>
           <p className="text-gray-600 dark:text-gray-400">
-            Check back later for new quizzes from your instructors
+            Check back later for new quizzes from your instructors.
           </p>
         </div>
       )}
