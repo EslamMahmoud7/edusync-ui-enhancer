@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { GraduationCap, Star, Users, FileText, Edit3, Save, X, Trash2 } from 'lucide-react';
+import { GraduationCap, Star, Users, FileText, Edit3, Save, X, Trash2, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { submittedAssignmentService, SubmittedAssignmentDTO, GradeSubmittedAssignmentDTO } from '../../services/submittedAssignment';
 import api from '../../services/api';
+import { exportToCSV } from '../../utils/csvExport';
 
 export default function InstructorGrading() {
   const [submissions, setSubmissions] = useState<SubmittedAssignmentDTO[]>([]);
@@ -37,6 +38,19 @@ export default function InstructorGrading() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const exportGradesToCSV = () => {
+    const exportData = submissions.map(submission => ({
+      'Student Name': submission.studentName,
+      'Assignment': submission.assignmentTitle,
+      'Submission Title': submission.submissionTitle,
+      'Submission Date': new Date(submission.submissionDate).toLocaleDateString(),
+      'Grade': submission.grade !== undefined ? `${submission.grade}/100` : 'Not Graded',
+      'Instructor Notes': submission.instructorNotes || 'No notes'
+    }));
+    
+    exportToCSV(exportData, `grades-${new Date().toISOString().split('T')[0]}.csv`);
   };
 
   const handleGradeSubmission = (submission: SubmittedAssignmentDTO) => {
@@ -116,6 +130,10 @@ export default function InstructorGrading() {
           </p>
         </div>
         <div className="flex items-center gap-4">
+          <Button onClick={exportGradesToCSV} variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
           <Badge variant="secondary" className="px-3 py-1">
             <Users className="h-4 w-4 mr-1" />
             {submissions.length} Submissions

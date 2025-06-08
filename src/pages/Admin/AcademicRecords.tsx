@@ -1,5 +1,5 @@
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
-import { Edit, Trash2, Filter, UploadCloud, ListChecks, AlertCircle } from 'lucide-react';
+import { Edit, Trash2, Filter, UploadCloud, ListChecks, AlertCircle, Download } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { useToast } from '../../hooks/use-toast';
 import { academicRecordsService } from '../../services/academicRecords';
@@ -20,8 +20,8 @@ import AcademicRecordModal from '../../components/AcademicRecordModal';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { useAuth } from '../../Context/useAuth'; 
-
+import { useAuth } from '../../Context/useAuth';
+import { exportToCSV } from '../../utils/csvExport';
 
 export default function AcademicRecordsPage() {
   const { user } = useAuth(); 
@@ -87,6 +87,20 @@ export default function AcademicRecordsPage() {
     }
   };
 
+  const exportAcademicRecordsToCSV = () => {
+    const exportData = filteredRecords.map(record => ({
+      'Student Name': record.studentFullName,
+      'Course': record.courseTitle,
+      'Group': record.groupLabel,
+      'Assessment Type': getAssessmentTypeLabel(record.assessmentType),
+      'Grade': record.gradeValue,
+      'Term': record.term,
+      'Status': getStatusLabel(record.status),
+      'Date Recorded': new Date(record.dateRecorded).toLocaleDateString()
+    }));
+    
+    exportToCSV(exportData, `academic-records-${new Date().toISOString().split('T')[0]}.csv`);
+  };
 
   const filterRecords = () => {
     if (!searchQuery) {
@@ -208,7 +222,13 @@ export default function AcademicRecordsPage() {
 
   return (
     <div className="space-y-8 p-4 md:p-6">
-      <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Academic Records Management</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Academic Records Management</h1>
+        <Button onClick={exportAcademicRecordsToCSV} className="bg-green-600 hover:bg-green-700">
+          <Download className="h-4 w-4 mr-2" />
+          Export CSV
+        </Button>
+      </div>
 
       <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md">
         <CardHeader>

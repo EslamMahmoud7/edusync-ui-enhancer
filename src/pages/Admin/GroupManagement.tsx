@@ -1,45 +1,23 @@
-import { useState } from 'react';
-import { Plus, Edit, Trash2, Users } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Edit, Trash2, Users, BookOpen, Calendar, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useForm } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { groupService } from '@/services/group';
 import { courseService } from '@/services/course';
 import { userService } from '@/services/user';
 import { GroupDTO, CreateGroupDTO, UpdateGroupDTO } from '@/types/group';
+import { CourseDTO } from '@/types/course';
+import { InstructorDTO } from '@/types/user';
 import SearchInput from '@/components/SearchInput';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
+import { exportToCSV } from '@/utils/csvExport';
 
 export default function GroupManagement() {
   // Helper to turn "YYYY-MM-DDTHH:mm" into "YYYY-MM-DDTHH:mm:00"
@@ -58,7 +36,7 @@ export default function GroupManagement() {
 
   const { data: groups = [], isLoading } = useQuery({
     queryKey: ['groups'],
-    queryFn: groupService.getAll,
+    queryFn: groupService.getAll
   });
 
   const { data: courses = [] } = useQuery({
@@ -131,6 +109,22 @@ export default function GroupManagement() {
         .includes(searchQuery.toLowerCase())
     )
   );
+
+  const exportGroupsToCSV = () => {
+    const exportData = filteredGroups.map(group => ({
+      'Label': group.label,
+      'Course': group.courseTitle,
+      'Instructor': group.instructorName,
+      'Schedule': group.schedule,
+      'Room': group.room || 'N/A',
+      'Capacity': group.capacity,
+      'Enrolled Students': group.enrolledStudentsCount,
+      'Start Date': new Date(group.startDate).toLocaleDateString(),
+      'End Date': new Date(group.endDate).toLocaleDateString()
+    }));
+    
+    exportToCSV(exportData, `groups-${new Date().toISOString().split('T')[0]}.csv`);
+  };
 
   // --- Create handler ---
   const handleCreate = (data: CreateGroupDTO) => {
@@ -221,95 +215,35 @@ export default function GroupManagement() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Group Management</h1>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Group
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Create New Group</DialogTitle>
-            </DialogHeader>
-            <Form {...createForm}>
-              <form
-                onSubmit={createForm.handleSubmit(handleCreate)}
-                className="space-y-4"
-              >
-                <FormField
-                  control={createForm.control}
-                  name="label"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Group Label</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter group label" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={createForm.control}
-                  name="courseId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Course</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a course" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {courses.map((course) => (
-                            <SelectItem key={course.id} value={course.id}>
-                              {course.title}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={createForm.control}
-                  name="instructorId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Instructor (Optional)</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue="none">
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select an instructor" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="none">
-                            No instructor assigned
-                          </SelectItem>
-                          {instructors.map((instructor) => (
-                            <SelectItem key={instructor.id} value={instructor.id}>
-                              {instructor.firstName} {instructor.lastName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid grid-cols-2 gap-4">
+        <div className="flex gap-2">
+          <Button onClick={exportGroupsToCSV} variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Group
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Create New Group</DialogTitle>
+              </DialogHeader>
+              <Form {...createForm}>
+                <form
+                  onSubmit={createForm.handleSubmit(handleCreate)}
+                  className="space-y-4"
+                >
                   <FormField
                     control={createForm.control}
-                    name="startTime"
+                    name="label"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Start Date &amp; Time</FormLabel>
+                        <FormLabel>Group Label</FormLabel>
                         <FormControl>
-                          <Input type="datetime-local" {...field} />
+                          <Input placeholder="Enter group label" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -317,48 +251,114 @@ export default function GroupManagement() {
                   />
                   <FormField
                     control={createForm.control}
-                    name="endTime"
+                    name="courseId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>End Date &amp; Time</FormLabel>
+                        <FormLabel>Course</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a course" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {courses.map((course) => (
+                              <SelectItem key={course.id} value={course.id}>
+                                {course.title}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={createForm.control}
+                    name="instructorId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Instructor (Optional)</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue="none">
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select an instructor" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">
+                              No instructor assigned
+                            </SelectItem>
+                            {instructors.map((instructor) => (
+                              <SelectItem key={instructor.id} value={instructor.id}>
+                                {instructor.firstName} {instructor.lastName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={createForm.control}
+                      name="startTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Start Date &amp; Time</FormLabel>
+                          <FormControl>
+                            <Input type="datetime-local" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={createForm.control}
+                      name="endTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>End Date &amp; Time</FormLabel>
+                          <FormControl>
+                            <Input type="datetime-local" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <FormField
+                    control={createForm.control}
+                    name="location"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Location</FormLabel>
                         <FormControl>
-                          <Input type="datetime-local" {...field} />
+                          <Input placeholder="Enter location" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </div>
-                <FormField
-                  control={createForm.control}
-                  name="location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Location</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter location" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="flex justify-end gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsCreateDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={createMutation.isPending}>
-                    {createMutation.isPending ? 'Creating...' : 'Create Group'}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+                  
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsCreateDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={createMutation.isPending}>
+                      {createMutation.isPending ? 'Creating...' : 'Create Group'}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <SearchInput

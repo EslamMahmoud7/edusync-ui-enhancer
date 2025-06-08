@@ -1,58 +1,39 @@
-import { useState } from 'react';
-import { Plus, Edit, Trash2, Shield, ShieldOff, Upload, Users as UsersIcon, UserMinus } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Edit, Trash2, Upload, Users, UserCheck, UserX, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { useForm } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userService } from '@/services/user';
-import { groupService } from '@/services/group';
-import { UserDTO, CreateUserDTO, UpdateUserDTO } from '@/types/user';
+import { UserDTO, CreateUserDTO, UpdateUserDTO, BulkAddUsersResultDTO } from '@/types/user';
 import SearchInput from '@/components/SearchInput';
 import { useToast } from '@/hooks/use-toast';
-
-const ROLE_LABELS = {
-  1: 'Student',
-  2: 'Admin',
-  3: 'Instructor'
-};
-
-const ROLE_COLORS = {
-  1: 'bg-blue-100 text-blue-800',
-  2: 'bg-red-100 text-red-800',
-  3: 'bg-green-100 text-green-800'
-};
+import { Badge } from '@/components/ui/badge';
+import { exportToCSV } from '@/utils/csvExport';
 
 export default function UserManagement() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<number | undefined>();
+  const [roleFilter, setRoleFilter] = useState<number | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isCsvDialogOpen, setIsCsvDialogOpen] = useState(false);
-  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
-  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false); // New state for the remove dialog
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserDTO | null>(null);
+  const [bulkUploadResult, setBulkUploadResult] = useState<BulkAddUsersResultDTO | null>(null);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [csvRole, setCsvRole] = useState<number>(1);
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [selectedGroup, setSelectedGroup] = useState<string>('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const createForm = useForm<CreateUserDTO>();
-  const editForm = useForm<UpdateUserDTO>();
+  const createUserForm = useForm<CreateUserDTO>();
+  const editUserForm = useForm<UpdateUserDTO>();
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users', roleFilter],
-    queryFn: () => userService.getAll(roleFilter)
-  });
-
-  const { data: groups = [] } = useQuery({
-    queryKey: ['groups'],
-    queryFn: groupService.getAll
+    queryFn: () => userService.getAll(roleFilter || undefined)
   });
 
   const createMutation = useMutation({
@@ -60,7 +41,7 @@ export default function UserManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setIsCreateDialogOpen(false);
-      createForm.reset();
+      createUserForm.reset();
       toast({ title: 'User created successfully' });
     },
     onError: (error: any) => {
@@ -73,8 +54,9 @@ export default function UserManagement() {
       userService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      setIsEditDialogOpen(false);
       setEditingUser(null);
-      editForm.reset();
+      editUserForm.reset();
       toast({ title: 'User updated successfully' });
     },
     onError: (error: any) => {
@@ -93,61 +75,25 @@ export default function UserManagement() {
     }
   });
 
-  const csvUploadMutation = useMutation({
+  const uploadCsvMutation = useMutation({
     mutationFn: userService.uploadCsv,
-    onSuccess: (result) => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      setIsCsvDialogOpen(false);
-      setCsvFile(null);
-      toast({
-        title: `CSV Upload Complete`,
-        description: `${result.successfullyAddedCount} users added successfully. ${result.errorMessages.length} errors.`
-      });
+      setBulkUploadResult(data);
+      setUploading(false);
+      toast({ title: 'Bulk upload completed', description: `${data.successfullyAddedCount} users added successfully.` });
     },
     onError: (error: any) => {
-      toast({ title: 'Error uploading CSV', description: error.message, variant: 'destructive' });
+      setUploading(false);
+      toast({ title: 'Bulk upload failed', description: error.message, variant: 'destructive' });
     }
   });
 
-  const assignToGroupMutation = useMutation({
-    mutationFn: userService.assignToGroupBulk,
-    onSuccess: (result) => {
-      setIsAssignDialogOpen(false);
-      setSelectedUsers([]);
-      setSelectedGroup('');
-      toast({
-        title: 'Group Assignment Complete',
-        description: `${result.studentsEnrolledSuccessfully} users assigned successfully.`
-      });
-    },
-    onError: (error: any) => {
-      toast({ title: 'Error assigning to group', description: error.message, variant: 'destructive' });
-    }
-  });
-
-  // New mutation for removing a user from a group
-  const removeFromGroupMutation = useMutation({
-    mutationFn: userService.removeFromGroupBulk, // Assuming a similar service method exists
-    onSuccess: () => {
-      setIsRemoveDialogOpen(false);
-      setSelectedUsers([]);
-      setSelectedGroup('');
-      toast({ title: 'Users removed from group successfully' });
-    },
-    onError: (error: any) => {
-      toast({ title: 'Error removing users from group', description: error.message, variant: 'destructive' });
-    }
-  });
-
-
-  const filteredUsers = users.filter(user => {
-    const matchesSearch =
-      user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase());
-
-    return matchesSearch;
-  });
+  const filteredUsers = users.filter(user =>
+    user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleCreate = (data: CreateUserDTO) => {
     createMutation.mutate(data);
@@ -155,14 +101,8 @@ export default function UserManagement() {
 
   const handleEdit = (user: UserDTO) => {
     setEditingUser(user);
-    editForm.reset({
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      isActive: user.isActive,
-      phoneNumber: user.phoneNumber || ''
-    });
+    editUserForm.reset(user);
+    setIsEditDialogOpen(true);
   };
 
   const handleUpdate = (data: UpdateUserDTO) => {
@@ -177,38 +117,55 @@ export default function UserManagement() {
     }
   };
 
-  const toggleUserStatus = (user: UserDTO) => {
-    updateMutation.mutate({
-      id: user.id,
-      data: { isActive: !user.isActive }
-    });
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setCsvFile(e.target.files[0]);
+    } else {
+      setCsvFile(null);
+    }
   };
 
-  const handleCsvUpload = () => {
+  const handleBulkUpload = async () => {
     if (!csvFile) {
-      toast({ title: 'Please select a CSV file', variant: 'destructive' });
+      toast({ title: 'No file selected', description: 'Please select a CSV file to upload.', variant: 'destructive' });
       return;
     }
-    csvUploadMutation.mutate({ csvFile, assignedRoleForAll: csvRole });
+
+    setUploading(true);
+    const assignedRoleForAll = parseInt((document.getElementById('assignedRoleForAll') as HTMLSelectElement).value);
+
+    const data = {
+      csvFile: csvFile,
+      assignedRoleForAll: assignedRoleForAll
+    };
+
+    uploadCsvMutation.mutate(data);
+    setIsBulkUploadOpen(false);
   };
 
-  const handleAssignToGroup = () => {
-    if (selectedUsers.length === 0 || !selectedGroup) {
-      toast({ title: 'Please select users and a group', variant: 'destructive' });
-      return;
+  const getRoleLabel = (role: number) => {
+    switch (role) {
+      case 1: return 'Student';
+      case 2: return 'Admin';
+      case 3: return 'Instructor';
+      default: return 'Unknown';
     }
-    assignToGroupMutation.mutate({ groupId: selectedGroup, studentIds: selectedUsers });
   };
 
-  // New handler for removing users from a group
-  const handleRemoveFromGroup = () => {
-    if (selectedUsers.length === 0 || !selectedGroup) {
-      toast({ title: 'Please select users and a group', variant: 'destructive' });
-      return;
-    }
-    removeFromGroupMutation.mutate({ groupId: selectedGroup, studentIds: selectedUsers });
+  const exportUsersToCSV = () => {
+    const exportData = filteredUsers.map(user => ({
+      'Email': user.email,
+      'First Name': user.firstName,
+      'Last Name': user.lastName,
+      'Role': getRoleLabel(user.role),
+      'Phone': user.phoneNumber || 'N/A',
+      'Institution': user.institution || 'N/A',
+      'Status': user.isActive ? 'Active' : 'Inactive',
+      'Created At': new Date(user.createdAt).toLocaleDateString()
+    }));
+    
+    exportToCSV(exportData, `users-${new Date().toISOString().split('T')[0]}.csv`);
   };
-
 
   if (isLoading) {
     return <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div></div>;
@@ -219,140 +176,56 @@ export default function UserManagement() {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">User Management</h1>
         <div className="flex gap-2">
-          <Dialog open={isCsvDialogOpen} onOpenChange={setIsCsvDialogOpen}>
+          <Button onClick={exportUsersToCSV} variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+          <Dialog open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen}>
             <DialogTrigger asChild>
               <Button variant="outline">
                 <Upload className="h-4 w-4 mr-2" />
-                Upload CSV
+                Bulk Upload
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Upload Users from CSV</DialogTitle>
+                <DialogTitle>Bulk Upload Users</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">CSV File</label>
-                  <Input
-                    type="file"
-                    accept=".csv"
-                    onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    Format: FirstName,LastName,Email,Password
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Default Role</label>
-                  <Select value={csvRole.toString()} onValueChange={(value) => setCsvRole(Number(value))}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">Student</SelectItem>
-                      <SelectItem value="2">Admin</SelectItem>
-                      <SelectItem value="3">Instructor</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsCsvDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleCsvUpload} disabled={csvUploadMutation.isPending}>
-                    {csvUploadMutation.isPending ? 'Uploading...' : 'Upload'}
-                  </Button>
-                </div>
+                <p className="text-sm text-gray-500">Upload a CSV file containing user data. The CSV should have columns: email, firstName, lastName, role, phoneNumber (optional).</p>
+                <Input type="file" accept=".csv" onChange={handleFileUpload} />
+                <Select id="assignedRoleForAll" defaultValue="1">
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Role for All" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Student</SelectItem>
+                    <SelectItem value="3">Instructor</SelectItem>
+                    <SelectItem value="2">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button onClick={handleBulkUpload} disabled={uploading}>
+                  {uploading ? 'Uploading...' : 'Upload'}
+                </Button>
+                {bulkUploadResult && (
+                  <div className="mt-4">
+                    <p>Total rows attempted: {bulkUploadResult.totalRowsAttempted}</p>
+                    <p>Successfully added: {bulkUploadResult.successfullyAddedCount}</p>
+                    {bulkUploadResult.errorMessages.length > 0 && (
+                      <div>
+                        <p>Errors:</p>
+                        <ul>
+                          {bulkUploadResult.errorMessages.map((error, index) => (
+                            <li key={index}>{error}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </DialogContent>
           </Dialog>
-
-          <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <UsersIcon className="h-4 w-4 mr-2" />
-                Assign to Group
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Assign Users to Group</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Selected Users: {selectedUsers.length}</label>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Group</label>
-                  <Select value={selectedGroup} onValueChange={setSelectedGroup}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a group" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {groups.map((group) => (
-                        <SelectItem key={group.id} value={group.id}>
-                          {group.label} - {group.courseTitle}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsAssignDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleAssignToGroup} disabled={assignToGroupMutation.isPending}>
-                    {assignToGroupMutation.isPending ? 'Assigning...' : 'Assign'}
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          {/* New "Remove from Group" Dialog */}
-          <Dialog open={isRemoveDialogOpen} onOpenChange={setIsRemoveDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="destructive">
-                <UserMinus className="h-4 w-4 mr-2" />
-                Remove from Group
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Remove Users from Group</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Selected Users: {selectedUsers.length}</label>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Group</label>
-                  <Select value={selectedGroup} onValueChange={setSelectedGroup}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a group" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {groups.map((group) => (
-                        <SelectItem key={group.id} value={group.id}>
-                          {group.label} - {group.courseTitle}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsRemoveDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleRemoveFromGroup} disabled={removeFromGroupMutation.isPending} variant="destructive">
-                    {removeFromGroupMutation.isPending ? 'Removing...' : 'Remove'}
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -364,64 +237,23 @@ export default function UserManagement() {
               <DialogHeader>
                 <DialogTitle>Create New User</DialogTitle>
               </DialogHeader>
-              <Form {...createForm}>
-                <form onSubmit={createForm.handleSubmit(handleCreate)} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={createForm.control}
-                      name="firstName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>First Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter first name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={createForm.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Last Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter last name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+              <Form {...createUserForm}>
+                <form onSubmit={createUserForm.handleSubmit(handleCreate)} className="space-y-4">
                   <FormField
-                    control={createForm.control}
+                    control={createUserForm.control}
                     name="email"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="Enter email" {...field} />
+                          <Input placeholder="Enter email" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                   <FormField
-                    control={createForm.control}
-                    name="phoneNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone Number</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter phone number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={createForm.control}
+                    control={createUserForm.control}
                     name="password"
                     render={({ field }) => (
                       <FormItem>
@@ -434,12 +266,38 @@ export default function UserManagement() {
                     )}
                   />
                   <FormField
-                    control={createForm.control}
+                    control={createUserForm.control}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>First Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter first name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={createUserForm.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Last Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter last name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={createUserForm.control}
                     name="role"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Role</FormLabel>
-                        <Select onValueChange={(value) => field.onChange(Number(value))}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a role" />
@@ -470,83 +328,46 @@ export default function UserManagement() {
         </div>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex items-center justify-between">
         <SearchInput
           placeholder="Search users..."
           onSearch={setSearchQuery}
-          className="max-w-md"
         />
-        <Select value={roleFilter?.toString() || 'all'} onValueChange={(value) => setRoleFilter(value === 'all' ? undefined : Number(value))}>
-          <SelectTrigger className="w-40">
+        <Select onValueChange={(value) => setRoleFilter(value === 'all' ? null : parseInt(value))} defaultValue="all">
+          <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by role" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Roles</SelectItem>
-            <SelectItem value="1">Students</SelectItem>
-            <SelectItem value="2">Admins</SelectItem>
-            <SelectItem value="3">Instructors</SelectItem>
+            <SelectItem value="1">Student</SelectItem>
+            <SelectItem value="2">Admin</SelectItem>
+            <SelectItem value="3">Instructor</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <div className="bg-white rounded-lg border">
+      <div className="bg-white rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>
-                <input
-                  type="checkbox"
-                  checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedUsers(filteredUsers.map(u => u.id));
-                    } else {
-                      setSelectedUsers([]);
-                    }
-                  }}
-                />
-              </TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Phone</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Created</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredUsers.map((user) => (
               <TableRow key={user.id}>
-                <TableCell>
-                  <input
-                    type="checkbox"
-                    checked={selectedUsers.includes(user.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedUsers([...selectedUsers, user.id]);
-                      } else {
-                        setSelectedUsers(selectedUsers.filter(id => id !== user.id));
-                      }
-                    }}
-                  />
-                </TableCell>
-                <TableCell className="font-medium">
-                  {user.firstName} {user.lastName}
-                </TableCell>
+                <TableCell className="font-medium">{user.firstName} {user.lastName}</TableCell>
                 <TableCell>{user.email}</TableCell>
-                <TableCell>{user.phoneNumber || 'N/A'}</TableCell>
-                <TableCell>
-                  <Badge className={ROLE_COLORS[user.role as keyof typeof ROLE_COLORS]}>
-                    {ROLE_LABELS[user.role as keyof typeof ROLE_LABELS]}
-                  </Badge>
-                </TableCell>
+                <TableCell>{getRoleLabel(user.role)}</TableCell>
                 <TableCell>
                   <Badge variant={user.isActive ? 'default' : 'secondary'}>
                     {user.isActive ? 'Active' : 'Inactive'}
                   </Badge>
                 </TableCell>
-                <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                 <TableCell>
                   <div className="flex gap-2">
                     <Button
@@ -555,13 +376,6 @@ export default function UserManagement() {
                       onClick={() => handleEdit(user)}
                     >
                       <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => toggleUserStatus(user)}
-                    >
-                      {user.isActive ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
                     </Button>
                     <Button
                       variant="outline"
@@ -578,75 +392,46 @@ export default function UserManagement() {
         </Table>
       </div>
 
-      {/* Edit Dialog */}
-      <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
+      <Dialog open={isEditDialogOpen} onOpenChange={() => setIsEditDialogOpen(false)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
           </DialogHeader>
-          <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(handleUpdate)} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={editForm.control}
-                  name="firstName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>First Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter first name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={editForm.control}
-                  name="lastName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter last name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+          <Form {...editUserForm}>
+            <form onSubmit={editUserForm.handleSubmit(handleUpdate)} className="space-y-4">
               <FormField
-                control={editForm.control}
-                name="email"
+                control={editUserForm.control}
+                name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>First Name</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="Enter email" {...field} />
+                      <Input placeholder="Enter first name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <FormField
-                control={editForm.control}
-                name="phoneNumber"
+                control={editUserForm.control}
+                name="lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
+                    <FormLabel>Last Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter phone number" {...field} />
+                      <Input placeholder="Enter last name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <FormField
-                control={editForm.control}
+                control={editUserForm.control}
                 name="role"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Role</FormLabel>
-                    <Select onValueChange={(value) => field.onChange(Number(value))} value={field.value?.toString()}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a role" />
@@ -662,8 +447,26 @@ export default function UserManagement() {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={editUserForm.control}
+                name="isActive"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-md border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel>Active</FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Set user status
+                      </p>
+                    </div>
+                    <FormControl>
+                      <Input type="checkbox" checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setEditingUser(null)}>
+                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                   Cancel
                 </Button>
                 <Button type="submit" disabled={updateMutation.isPending}>
@@ -676,4 +479,4 @@ export default function UserManagement() {
       </Dialog>
     </div>
   );
-} 
+}
