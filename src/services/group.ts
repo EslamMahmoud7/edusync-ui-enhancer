@@ -13,6 +13,11 @@ export const groupService = {
     return response.data;
   },
 
+  getInstructorGroups: async (): Promise<GroupDTO[]> => {
+    const response = await api.get('/api/group/my-groups');
+    return response.data;
+  },
+
   getStudents: async (groupId: string): Promise<StudentInGroupDTO[]> => {
     const response = await api.get(`/api/group/${groupId}/students`);
     return response.data;
@@ -32,11 +37,8 @@ export const groupService = {
     await api.delete(`/api/group/${id}`);
   },
 
-  assignStudent: async (groupId: string, studentId: string): Promise<void> => {
-    await api.post('/api/course/assign-to-group', { groupId, studentId });
-  },
-
-  assignStudentsBulk: async (data: BulkGroupEnrollmentDTO): Promise<void> => {
-    await api.post('/api/course/assign-students-to-group-bulk', data);
+  assignStudentsBulk: async (data: BulkGroupEnrollmentDTO): Promise<{ success: boolean; message: string }> => {
+    const response = await api.post('/api/group/assign-students-bulk', data);
+    return response.data;
   }
 };

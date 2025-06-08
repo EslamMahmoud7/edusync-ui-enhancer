@@ -23,6 +23,11 @@ export const academicRecordsService = {
     return response.data;
   },
 
+  getByStudent: async (studentId: string): Promise<AcademicRecordDTO[]> => {
+    const response = await api.get(`/api/AcademicRecord/student/${studentId}`);
+    return response.data;
+  },
+
   create: async (data: CreateAcademicRecordDTO): Promise<AcademicRecordDTO> => {
     const response = await api.post('/api/AcademicRecord', data);
     return response.data;
@@ -38,6 +43,17 @@ export const academicRecordsService = {
   },
 
   bulkAdd: async (file: File): Promise<BulkAddAcademicRecordsResultDTO> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/api/AcademicRecord/bulk-add', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  addFromCsv: async (file: File): Promise<BulkAddAcademicRecordsResultDTO> => {
     const formData = new FormData();
     formData.append('file', file);
     const response = await api.post('/api/AcademicRecord/bulk-add', formData, {

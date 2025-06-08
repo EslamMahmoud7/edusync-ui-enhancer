@@ -3,53 +3,48 @@ import api from './api';
 import type { 
   QuizDTO, 
   CreateQuizDTO, 
-  UpdateQuizDTO, 
+  UpdateQuizDTO,
   QuizModelDTO,
   UploadQuizModelCsvDTO,
   StudentQuizListItemDTO,
   StudentQuizAttemptDTO,
   StudentQuizSubmissionDTO,
-  QuizAttemptResultDTO,
-  UserActionByIdDTO
+  QuizAttemptResultDTO
 } from '../types/quiz';
 
 export const quizService = {
-  getInstructorQuizzes: async (instructorId: string): Promise<QuizDTO[]> => {
-    const response = await api.get(`/api/quiz/instructor/${instructorId}/my-quizzes`);
-    return response.data;
-  },
-
-  getQuizForInstructor: async (quizId: string, instructorId: string): Promise<QuizDTO> => {
-    const response = await api.get(`/api/quiz/${quizId}/instructor-view?instructorId=${instructorId}`);
-    return response.data;
-  },
-
+  // Instructor endpoints
   createQuiz: async (data: CreateQuizDTO): Promise<QuizDTO> => {
-    const response = await api.post('/api/quiz', data);
+    const response = await api.post('/api/Quiz', data);
     return response.data;
   },
 
   updateQuiz: async (quizId: string, data: UpdateQuizDTO): Promise<QuizDTO> => {
-    const response = await api.put(`/api/quiz/${quizId}`, data);
+    const response = await api.put(`/api/Quiz/${quizId}`, data);
     return response.data;
   },
 
-  deleteQuiz: async (quizId: string, instructorId: string): Promise<void> => {
-    await api.delete(`/api/quiz/${quizId}?instructorId=${instructorId}`);
+  deleteQuiz: async (quizId: string): Promise<void> => {
+    await api.delete(`/api/Quiz/${quizId}`);
   },
 
-  getQuizModels: async (quizId: string): Promise<QuizModelDTO[]> => {
-    const response = await api.get(`/api/quiz/${quizId}/models`);
+  getQuizForInstructor: async (quizId: string): Promise<QuizDTO> => {
+    const response = await api.get(`/api/Quiz/${quizId}/instructor-view`);
     return response.data;
   },
 
-  uploadQuizModel: async (quizId: string, data: UploadQuizModelCsvDTO): Promise<QuizModelDTO> => {
+  getMyQuizzesAsInstructor: async (): Promise<QuizDTO[]> => {
+    const response = await api.get('/api/Quiz/instructor/my-quizzes');
+    return response.data;
+  },
+
+  addQuizModel: async (data: UploadQuizModelCsvDTO): Promise<QuizModelDTO> => {
     const formData = new FormData();
-    formData.append('ModelIdentifier', data.modelIdentifier);
-    formData.append('InstructorId', data.instructorId);
-    formData.append('CsvFile', data.csvFile);
-
-    const response = await api.post(`/api/quiz/models`, formData, {
+    formData.append('quizId', data.quizId);
+    formData.append('modelIdentifier', data.modelIdentifier);
+    formData.append('csvFile', data.csvFile);
+    
+    const response = await api.post('/api/Quiz/models', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -57,33 +52,39 @@ export const quizService = {
     return response.data;
   },
 
-  getQuizAttempts: async (quizId: string, instructorId: string): Promise<QuizAttemptResultDTO[]> => {
-    const response = await api.get(`/api/quiz/${quizId}/attempts/all?instructorId=${instructorId}`);
+  getAllAttemptsForQuiz: async (quizId: string): Promise<QuizAttemptResultDTO[]> => {
+    const response = await api.get(`/api/Quiz/${quizId}/attempts/all`);
     return response.data;
   },
 
-  getAvailableQuizzes: async (studentId: string): Promise<StudentQuizListItemDTO[]> => {
-    const response = await api.get(`/api/quiz/student/${studentId}/available`);
+  getStudentAttemptForInstructor: async (attemptId: string): Promise<QuizAttemptResultDTO> => {
+    const response = await api.get(`/api/Quiz/attempts/${attemptId}/instructor-view`);
     return response.data;
   },
 
-  startQuiz: async (quizId: string, studentId: string): Promise<StudentQuizAttemptDTO> => {
-    const response = await api.post(`/api/quiz/${quizId}/start`, { studentId });
+  // Student endpoints
+  getAvailableQuizzesForStudent: async (): Promise<StudentQuizListItemDTO[]> => {
+    const response = await api.get('/api/Quiz/student/available');
     return response.data;
   },
 
-  resumeQuiz: async (quizId: string, studentId: string): Promise<StudentQuizAttemptDTO> => {
-    const response = await api.get(`/api/quiz/${quizId}/resume?studentId=${studentId}`);
+  startQuizAttempt: async (quizId: string): Promise<StudentQuizAttemptDTO> => {
+    const response = await api.post(`/api/Quiz/${quizId}/start`);
     return response.data;
   },
 
-  submitQuiz: async (data: StudentQuizSubmissionDTO): Promise<QuizAttemptResultDTO> => {
-    const response = await api.post('/api/quiz/attempt/submit', data);
+  resumeQuizAttempt: async (quizId: string): Promise<StudentQuizAttemptDTO> => {
+    const response = await api.get(`/api/Quiz/${quizId}/resume`);
     return response.data;
   },
 
-  getAttemptResult: async (attemptId: string, studentId: string): Promise<QuizAttemptResultDTO> => {
-    const response = await api.get(`/api/quiz/attempt/${attemptId}/result?studentId=${studentId}`);
+  submitQuizAttempt: async (submission: StudentQuizSubmissionDTO): Promise<QuizAttemptResultDTO> => {
+    const response = await api.post('/api/Quiz/attempt/submit', submission);
+    return response.data;
+  },
+
+  getQuizAttemptResult: async (attemptId: string): Promise<QuizAttemptResultDTO> => {
+    const response = await api.get(`/api/Quiz/attempt/${attemptId}/result`);
     return response.data;
   }
 };

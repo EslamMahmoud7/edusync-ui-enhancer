@@ -5,114 +5,115 @@ export interface QuizDTO {
   description: string;
   groupId: string;
   groupLabel: string;
-  courseTitle: string;
-  instructorId: string;
-  instructorName: string;
   dueDate: string;
-  isPublished: boolean;
+  durationMinutes: number;
   maxAttempts: number;
-  timeLimit: number;
-  totalModels: number;
+  shuffleQuestions: boolean;
+  isPublished: boolean;
+  numberOfModels: number;
+  models: QuizModelDTO[];
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateQuizDTO {
   title: string;
   description: string;
   groupId: string;
-  instructorId: string;
   dueDate: string;
+  durationMinutes: number;
   maxAttempts: number;
-  timeLimit: number;
+  shuffleQuestions: boolean;
+  isPublished: boolean;
 }
 
 export interface UpdateQuizDTO {
   title?: string;
   description?: string;
   dueDate?: string;
+  durationMinutes?: number;
   maxAttempts?: number;
-  timeLimit?: number;
+  shuffleQuestions?: boolean;
   isPublished?: boolean;
-  requestingInstructorId: string;
 }
 
 export interface QuizModelDTO {
   id: string;
   quizId: string;
   modelIdentifier: string;
-  totalQuestions: number;
+  questions: QuestionDTO[];
   createdAt: string;
 }
 
 export interface UploadQuizModelCsvDTO {
+  quizId: string;
   modelIdentifier: string;
-  instructorId: string;
   csvFile: File;
 }
 
-export interface StudentQuizListItemDTO {
+export interface QuestionDTO {
   id: string;
+  text: string;
+  points: number;
+  options: QuestionOptionDTO[];
+}
+
+export interface QuestionOptionDTO {
+  id: string;
+  text: string;
+  isCorrect: boolean;
+}
+
+export interface StudentQuizListItemDTO {
+  quizId: string;
   title: string;
-  groupLabel: string;
   courseTitle: string;
+  description: string;
   dueDate: string;
   maxAttempts: number;
   attemptsMade: number;
-  lastAttemptStatus: AttemptStatus;
-  canAttempt: boolean;
-  timeLimit: number;
+  lastAttemptStatus: string;
 }
 
 export interface StudentQuizAttemptDTO {
   attemptId: string;
   quizId: string;
   quizTitle: string;
+  durationMinutes: number;
   startTime: string;
-  expectedEndTime: string;
   questions: QuestionDTO[];
-  currentAnswers: { [questionId: string]: number };
+  studentAnswers: StudentAnswerDTO[];
 }
 
-export interface QuestionDTO {
-  id: string;
-  questionText: string;
-  options: string[];
-  points: number;
+export interface StudentAnswerDTO {
+  questionId: string;
+  selectedOptionId?: string;
 }
 
 export interface StudentQuizSubmissionDTO {
   attemptId: string;
-  studentId: string;
-  answers: { [questionId: string]: number };
+  answers: StudentAnswerDTO[];
 }
 
 export interface QuizAttemptResultDTO {
   attemptId: string;
   quizTitle: string;
-  studentName: string;
-  totalScore: number;
-  maxScore: number;
-  percentage: number;
-  submittedAt: string;
-  questions: QuestionResultDTO[];
-}
-
-export interface QuestionResultDTO {
-  questionText: string;
-  studentAnswer: number;
-  correctAnswer: number;
-  points: number;
-  earnedPoints: number;
-  isCorrect: boolean;
-  options: string[];
-}
-
-export interface UserActionByIdDTO {
   studentId: string;
+  studentName: string;
+  startTime: string;
+  endTime?: string;
+  score: number;
+  totalPointsPossible: number;
+  status: string;
+  answerResults: AnswerResultDTO[];
 }
 
-export enum AttemptStatus {
-  InProgress = 0,
-  Submitted = 1,
-  Graded = 2
+export interface AnswerResultDTO {
+  questionId: string;
+  questionText: string;
+  pointsPossibleForQuestion: number;
+  selectedOptionText?: string;
+  correctOptionText: string;
+  pointsAwarded: number;
+  isCorrect: boolean;
 }
