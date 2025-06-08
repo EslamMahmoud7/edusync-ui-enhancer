@@ -13,20 +13,17 @@ export default function StudentQuizzes() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // We only want to fetch if the user object is available
     if (user?.id) {
       fetchQuizzes();
     } else {
-      // If no user, stop loading and show empty state
       setLoading(false);
     }
-  }, [user]); // Re-run when the user object becomes available
+  }, [user]);
 
   const fetchQuizzes = async () => {
-    setLoading(true); // Set loading true at the start of fetch
+    setLoading(true);
     try {
       if (user?.id) {
-        // ✅ Corrected: Call the renamed service function
         const data = await quizService.getAvailableQuizzes(user.id);
         setQuizzes(data);
       }
@@ -40,14 +37,13 @@ export default function StudentQuizzes() {
   const getActionButton = (quiz: StudentQuizListItemDTO) => {
     const { lastAttemptStatus, attemptsMade, maxAttempts, lastAttemptId } = quiz;
 
-    // This case covers when all attempts are used up.
     if (attemptsMade >= maxAttempts && lastAttemptStatus !== 'InProgress') {
       return (
         <Button
           onClick={() => navigate(`/student/quiz-result/${lastAttemptId}`)}
           variant="outline"
           className="w-full"
-          disabled={!lastAttemptId} // Disable if there's no attempt to view
+          disabled={!lastAttemptId}
         >
           <Eye className="h-4 w-4 mr-2" />
           View Results
@@ -55,7 +51,6 @@ export default function StudentQuizzes() {
       );
     }
     
-    // Resume an attempt that was started but not submitted
     if (lastAttemptStatus === 'InProgress') {
       return (
         <Button
@@ -68,7 +63,6 @@ export default function StudentQuizzes() {
       );
     }
 
-    // If the last attempt is finished, but more are available
     if ((lastAttemptStatus === 'Submitted' || lastAttemptStatus === 'Graded') && attemptsMade < maxAttempts) {
       return (
         <div className="space-y-2">
@@ -92,7 +86,6 @@ export default function StudentQuizzes() {
       );
     }
     
-    // Default case: No attempts made yet
     return (
       <Button
         onClick={() => navigate(`/student/quiz-info/${quiz.quizId}?action=start`)}

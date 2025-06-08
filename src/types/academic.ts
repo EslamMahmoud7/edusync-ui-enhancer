@@ -40,15 +40,12 @@ export interface CreateAcademicRecordDTO {
   studentId: string;
   courseId: string;
   groupId: string;
-  semester: string;
   year: number;
-  grade: string;
-  gpa: number;
-  creditHours: number;
-  gradeValue: number;
+  semester: string;
   assessmentType: AssessmentType;
-  term: string;
+  grade: number;
   status: AcademicRecordStatus;
+  term: string;
 }
 
 export interface UpdateAcademicRecordDTO {

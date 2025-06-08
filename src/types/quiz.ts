@@ -15,6 +15,19 @@ export interface QuizDTO {
   updatedAt: string;
 }
 
+export interface StudentQuizListItemDTO {
+  quizId: string;
+  title: string;
+  courseTitle: string;
+  description: string;
+  dueDate: string;
+  durationMinutes: number;
+  maxAttempts: number;
+  attemptsMade: number;
+  lastAttemptStatus: string;
+  lastAttemptId?: string;
+}
+
 export interface CreateQuizDTO {
   requestingInstructorId: string;
   title: string;
@@ -28,6 +41,7 @@ export interface CreateQuizDTO {
 }
 
 export interface UpdateQuizDTO {
+  requestingInstructorId: string;
   title?: string;
   description?: string;
   dueDate?: string;

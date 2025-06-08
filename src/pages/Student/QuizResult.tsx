@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle, XCircle, Clock, Trophy, FileText } from 'lucide-react';
@@ -24,7 +23,7 @@ export default function QuizResult() {
   const fetchResult = async () => {
     try {
       if (attemptId && user?.id) {
-        const data = await quizService.getAttemptResult(attemptId, user.id);
+        const data = await quizService.getQuizAttemptResult(attemptId, user.id);
         setResult(data);
       }
     } catch (error) {
@@ -35,15 +34,15 @@ export default function QuizResult() {
   };
 
   const getScorePercentage = () => {
-    if (!result) return 0;
+    if (!result || !result.totalPointsPossible) return 0;
     return Math.round((result.score / result.totalPointsPossible) * 100);
   };
 
   const getScoreColor = () => {
     const percentage = getScorePercentage();
     if (percentage >= 90) return 'text-green-600';
-    if (percentage >= 80) return 'text-blue-600';
     if (percentage >= 70) return 'text-yellow-600';
+    if (percentage >= 50) return 'text-orange-600';
     return 'text-red-600';
   };
 
@@ -101,7 +100,7 @@ export default function QuizResult() {
           </div>
           
           <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
-            Quiz Results
+            Quiz Results for {result.quizTitle}
           </h1>
           
           <div className={`text-6xl font-bold mb-4 ${getScoreColor()}`}>
@@ -139,7 +138,7 @@ export default function QuizResult() {
           
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
             <div className="text-2xl font-bold text-gray-800 dark:text-white">
-              {new Date(result.startTime).toLocaleDateString()}
+              {result.endTime ? new Date(result.endTime).toLocaleDateString() : new Date(result.startTime).toLocaleDateString()}
             </div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Completed Date</div>
           </div>
@@ -157,7 +156,7 @@ export default function QuizResult() {
           {result.answerResults?.map((answer, index) => (
             <div
               key={index}
-              className={`border-l-4 pl-6 py-4 ${
+              className={`border-l-4 pl-6 py-4 rounded-r-lg ${
                 answer.isCorrect
                   ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
                   : 'border-red-500 bg-red-50 dark:bg-red-900/20'
@@ -190,10 +189,10 @@ export default function QuizResult() {
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
                     Your Answer:
                   </p>
-                  <p className={`p-3 rounded-lg ${
+                  <p className={`p-3 rounded-lg text-sm ${
                     answer.isCorrect
-                      ? 'bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200'
-                      : 'bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200'
+                      ? 'bg-green-100/60 dark:bg-green-800/60 text-green-800 dark:text-green-200'
+                      : 'bg-red-100/60 dark:bg-red-800/60 text-red-800 dark:text-red-200'
                   }`}>
                     {answer.selectedOptionText || 'No answer selected'}
                   </p>
@@ -203,7 +202,7 @@ export default function QuizResult() {
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
                     Correct Answer:
                   </p>
-                  <p className="p-3 rounded-lg bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200">
+                  <p className="p-3 rounded-lg text-sm bg-green-100/60 dark:bg-green-800/60 text-green-800 dark:text-green-200">
                     {answer.correctOptionText}
                   </p>
                 </div>
@@ -215,10 +214,10 @@ export default function QuizResult() {
 
       <div className="flex justify-center">
         <Button
-          onClick={() => navigate('/quizzes')}
+          onClick={() => navigate('/student/quizzes')} 
           className="bg-edusync-primary hover:bg-edusync-secondary"
         >
-          Return to Dashboard
+          Return to Quizzes
         </Button>
       </div>
     </div>

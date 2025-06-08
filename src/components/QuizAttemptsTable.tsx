@@ -6,19 +6,15 @@ import { Badge } from '@/components/ui/badge';
 import type { QuizAttemptResultDTO } from '../types/quiz';
 import { useNavigate } from 'react-router-dom';
 
-// ✅ 1. Create a mapping for the enum numbers
-const statusMap: { [key: number]: string } = {
-  0: 'InProgress',
-  1: 'Submitted',
-  2: 'Graded',
-  3: 'TimeExpired',
-};
+interface QuizAttemptsTableProps {
+  attempts: QuizAttemptResultDTO[];
+}
+
 
 export default function QuizAttemptsTable({ attempts }: QuizAttemptsTableProps) {
   const navigate = useNavigate();
 
   const getStatusColor = (status: string | undefined) => {
-    // Add a check for undefined status
     if (!status) return 'bg-gray-100 text-gray-800';
     
     switch (status.toLowerCase()) {
@@ -55,34 +51,39 @@ export default function QuizAttemptsTable({ attempts }: QuizAttemptsTableProps) 
         </TableRow>
       </TableHeader>
       <TableBody>
-        {attempts.map((attempt) => {
-          // ✅ 2. Convert the status number to its string name
-          const statusText = statusMap[attempt.status as number] || 'Unknown';
-
-          return (
-            <TableRow key={attempt.attemptId}>
-              <TableCell>
-                <div className="font-medium">{attempt.studentName}</div>
-              </TableCell>
-              <TableCell>
-                <div className="text-sm">
-                  {new Date(attempt.startTime).toLocaleString()}
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="font-medium">
-                  {attempt.score ?? 'N/A'}/{attempt.totalPointsPossible}
-                </div>
-              </TableCell>
-              <TableCell>
-                {/* ✅ 3. Use the converted string for both display and color */}
-                <Badge className={getStatusColor(statusText)}>
-                  {statusText}
-                </Badge>
-              </TableCell>
-            </TableRow>
-          );
-        })}
+        {attempts.map((attempt) => (
+          <TableRow key={attempt.attemptId}>
+            <TableCell>
+              <div className="font-medium">{attempt.studentName}</div>
+            </TableCell>
+            <TableCell>
+              <div className="text-sm">
+                {new Date(attempt.startTime).toLocaleString()}
+              </div>
+            </TableCell>
+            <TableCell>
+              <div className="font-medium">
+                {attempt.score ?? 'N/A'}/{attempt.totalPointsPossible}
+              </div>
+            </TableCell>
+            <TableCell>
+              {/* ✅ We can now use attempt.status directly. */}
+              <Badge className={getStatusColor(attempt.status)}>
+                {attempt.status}
+              </Badge>
+            </TableCell>
+            <TableCell>
+              <Button
+                size="sm"
+                onClick={() => navigate(`/instructor/quiz-attempt/${attempt.attemptId}`)}
+                className="bg-edusync-primary hover:bg-edusync-secondary"
+              >
+                <Eye className="h-4 w-4 mr-1" />
+                View Details
+              </Button>
+            </TableCell>
+          </TableRow>
+        ))}
       </TableBody>
     </Table>
   );
