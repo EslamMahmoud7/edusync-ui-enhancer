@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -67,6 +68,26 @@ const App = () => (
                     <Route path="assignments" element={
                       <RoleGuard allowedRoles={[0, 1]}>
                         <AssignmentsPage />
+                      </RoleGuard>
+                    } />
+                    <Route path="quizzes" element={
+                      <RoleGuard allowedRoles={[0, 1]}>
+                        <StudentQuizzes />
+                      </RoleGuard>
+                    } />
+                    <Route path="student/quiz-info/:quizId" element={
+                      <RoleGuard allowedRoles={[0, 1]}>
+                        <QuizTaking />
+                      </RoleGuard>
+                    } />
+                    <Route path="student/quiz-taking/:quizId" element={
+                      <RoleGuard allowedRoles={[0, 1]}>
+                        <QuizTaking />
+                      </RoleGuard>
+                    } />
+                    <Route path="student/quiz-result/:attemptId" element={
+                      <RoleGuard allowedRoles={[0, 1]}>
+                        <QuizResult />
                       </RoleGuard>
                     } />
                     <Route path="profile" element={
@@ -139,6 +160,16 @@ const App = () => (
                     <Route path="instructor/grading" element={
                       <RoleGuard allowedRoles={[3]}>
                         <InstructorGrading />
+                      </RoleGuard>
+                    } />
+                    <Route path="instructor/quizzes" element={
+                      <RoleGuard allowedRoles={[3]}>
+                        <InstructorQuizzes />
+                      </RoleGuard>
+                    } />
+                    <Route path="instructor/quiz/:quizId" element={
+                      <RoleGuard allowedRoles={[3]}>
+                        <QuizEditor />
                       </RoleGuard>
                     } />
                   </Route>
