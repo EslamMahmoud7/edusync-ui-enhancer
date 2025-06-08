@@ -28,15 +28,13 @@ export default function AddQuizModelModal({ isOpen, onClose, quizId, onModelAdde
     setLoading(true);
 
     try {
-      // ✅ Corrected: Create the full data object here
       const uploadData: UploadQuizModelCsvDTO = {
         requestingInstructorId: user.id,
-        quizId: quizId, // Include the quizId from props
+        quizId: quizId,
         modelIdentifier: modelIdentifier,
         csvFile: csvFile
       };
 
-      // ✅ Corrected: Call the correct function name 'addQuizModel'
       await quizService.addQuizModel(uploadData);
       
       onModelAdded();

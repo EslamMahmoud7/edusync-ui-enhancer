@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { quizService } from '../services/quiz';
 import { groupService } from '../services/group';
 import type { CreateQuizDTO, QuizDTO } from '../types/quiz';
-import type { GroupDTO } from '../types/group'; // Make sure you have this type defined
+import type { GroupDTO } from '../types/group';
 
 interface CreateQuizModalProps {
   isOpen: boolean;
@@ -28,7 +28,7 @@ const getInstructorId = () => {
 };
 
 const initialFormData: CreateQuizDTO = {
-  requestingInstructorId: '', // Corrected: Use the new field
+  requestingInstructorId: '',
   title: '',
   description: '',
   groupId: '',
@@ -46,7 +46,6 @@ export default function CreateQuizModal({ isOpen, onClose, onQuizCreated }: Crea
 
   useEffect(() => {
     if (isOpen) {
-      // Set the instructor ID when the modal opens
       setFormData(prev => ({ ...prev, requestingInstructorId: getInstructorId() }));
       fetchGroups();
     }
@@ -56,7 +55,6 @@ export default function CreateQuizModal({ isOpen, onClose, onQuizCreated }: Crea
     try {
       const instructorId = getInstructorId();
       if (instructorId) {
-        // Assuming your groupService.getByInstructor takes the instructorId
         const data = await groupService.getByInstructor(instructorId); 
         setGroups(data);
       }
@@ -74,7 +72,6 @@ export default function CreateQuizModal({ isOpen, onClose, onQuizCreated }: Crea
     setLoading(true);
 
     try {
-      // The complete DTO is already in the formData state
       const quiz = await quizService.createQuiz(formData);
       onQuizCreated(quiz);
       handleClose();
@@ -87,7 +84,7 @@ export default function CreateQuizModal({ isOpen, onClose, onQuizCreated }: Crea
   };
 
   const handleClose = () => {
-    setFormData(initialFormData); // Reset to initial state
+    setFormData(initialFormData);
     onClose();
   };
 
@@ -126,7 +123,6 @@ export default function CreateQuizModal({ isOpen, onClose, onQuizCreated }: Crea
                 <SelectValue placeholder="Select a group" />
               </SelectTrigger>
               <SelectContent>
-                {/* Corrected: Display group.courseTitle */}
                 {groups.map((group) => (
                   <SelectItem key={group.id} value={group.id}>
                     {group.courseTitle} 

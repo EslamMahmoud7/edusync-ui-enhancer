@@ -47,7 +47,6 @@ export default function QuizAttemptsTable({ attempts }: QuizAttemptsTableProps) 
           <TableHead>Start Time</TableHead>
           <TableHead>Score</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead>Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -67,20 +66,11 @@ export default function QuizAttemptsTable({ attempts }: QuizAttemptsTableProps) 
               </div>
             </TableCell>
             <TableCell>
-              {/* ✅ We can now use attempt.status directly. */}
               <Badge className={getStatusColor(attempt.status)}>
                 {attempt.status}
               </Badge>
             </TableCell>
             <TableCell>
-              <Button
-                size="sm"
-                onClick={() => navigate(`/instructor/quiz-attempt/${attempt.attemptId}`)}
-                className="bg-edusync-primary hover:bg-edusync-secondary"
-              >
-                <Eye className="h-4 w-4 mr-1" />
-                View Details
-              </Button>
             </TableCell>
           </TableRow>
         ))}
