@@ -5,34 +5,26 @@ import { Badge } from "@/components/ui/badge";
 import MaterialsModal from "../../components/MaterialsModal";
 import api from "../../services/api";
 
-// Interface for what the frontend component expects for display and interaction
 interface GroupWithCourse {
-  id: string; // Unique ID for this specific group/session
-  label: string; // Display label for the group
-  courseId: string; // Unique ID for the underlying course
+  id: string;
+  label: string;
+  courseId: string;
   courseTitle: string;
   courseDescription: string;
   courseCredits: number;
   courseLevel: number;
-  startTime: string; // ISO date string for the group's session time
+  startTime: string;
   location: string;
 }
 
-// Interface for the actual data items returned by the API
 interface ApiScheduleItemGroup {
   groupId: string;
-  date: string; // This is the startTime
-  day: string; // Informational, can be derived
-  time: string; // Informational, can be derived
-  subject: string; // This is the courseTitle
-  room: string; // This is the location
-  doctor?: string; // Instructor's name, optional
-  // --- The following fields are assumed to be MISSING from this API endpoint
-  // --- and are needed for GroupWithCourse. We will use defaults.
-  // actualCourseId?: string;
-  // courseDescriptionText?: string;
-  // courseCreditPoints?: number;
-  // courseDifficultyLevel?: number;
+  date: string;
+  day: string;
+  time: string;
+  subject: string;
+  room: string;
+  doctor?: string;
 }
 
 export default function CoursesPage() {
@@ -147,7 +139,6 @@ export default function CoursesPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-edusync-primary via-edusync-secondary to-edusync-accent p-8 text-white">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10">
@@ -166,7 +157,6 @@ export default function CoursesPage() {
         </div>
       </div>
 
-      {/* Courses Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {groups.map((group, index) => {
           const dateInfo = formatDate(group.startTime);

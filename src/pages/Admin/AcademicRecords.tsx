@@ -165,10 +165,12 @@ export default function AcademicRecordsPage() {
     if (user?.id) {
       formData.append('UploadingInstructorId', user.id);
     }
-    formData.append('DefaultStatus', AcademicRecordStatus.Final.toString());
+    
+    formData.append('DefaultStatus', AcademicRecordStatus[AcademicRecordStatus.Final]);
 
     try {
       const result = await academicRecordsService.addFromCsv(formData);
+      
       setUploadResult(result);
       toast({
         title: "Upload Processed",
@@ -180,7 +182,15 @@ export default function AcademicRecordsPage() {
     } catch (error: any) {
       console.error('CSV Upload failed:', error);
       const errorMsg = error.response?.data?.errorMessages?.join(', ') || error.response?.data?.title || "CSV upload failed. Please check the file format and data.";
-      setUploadResult({ successfullyAddedCount: 0, totalRowsAttempted: csvFile ? 1 : 0, errorMessages: [errorMsg]});
+      
+      setUploadResult({ 
+        success: false,
+        message: "An error occurred during the upload.",
+        successfullyAddedCount: 0, 
+        totalRowsAttempted: 0,
+        errorMessages: [errorMsg]
+      });
+
       toast({ title: "Upload Error", description: errorMsg, variant: "destructive" });
     } finally {
       setIsUploading(false);

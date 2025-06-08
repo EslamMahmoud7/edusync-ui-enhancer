@@ -17,7 +17,7 @@ interface AcademicRecordModalProps {
 
 interface Student {
   id: string;
-  fullName: string;
+  fullName: string; 
 }
 
 interface Group {
@@ -27,8 +27,7 @@ interface Group {
   courseTitle: string;
 }
 
-
-const initialFormData = {
+const initialFormData: Omit<CreateAcademicRecordDTO, 'assessmentType' | 'status'> & { assessmentType: AssessmentType; status: AcademicRecordStatus } = {
   studentId: '',
   groupId: '',
   courseId: '',
@@ -132,7 +131,7 @@ export default function AcademicRecordModal({ isOpen, onClose, record }: Academi
             <>
               <div className="space-y-2">
                 <Label htmlFor="studentId">Student</Label>
-                <Select value={formData.studentId} onValueChange={(value) => setFormData({...formData, studentId: value})}>
+                <Select value={formData.studentId} onValueChange={(value) => setFormData({...formData, studentId: value})} required>
                   <SelectTrigger><SelectValue placeholder="Select student" /></SelectTrigger>
                   <SelectContent>
                     {students.map((student) => (
@@ -144,7 +143,7 @@ export default function AcademicRecordModal({ isOpen, onClose, record }: Academi
 
               <div className="space-y-2">
                 <Label htmlFor="groupId">Group</Label>
-                <Select value={formData.groupId} onValueChange={handleGroupChange}>
+                <Select value={formData.groupId} onValueChange={handleGroupChange} required>
                   <SelectTrigger><SelectValue placeholder="Select group" /></SelectTrigger>
                   <SelectContent>
                     {groups.map((group) => (

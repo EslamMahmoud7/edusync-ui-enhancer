@@ -8,9 +8,11 @@ export enum AssessmentType {
 }
 
 export enum AcademicRecordStatus {
-  Pending = 0,
-  Completed = 1,
-  Graded = 2
+  Pending,      
+  Provisional,  
+  Final,        
+  Graded,       
+  Excused       
 }
 
 export interface AcademicRecordDTO {
@@ -63,8 +65,7 @@ export interface BulkAddAcademicRecordsResultDTO {
   message: string;
   successfullyAddedCount: number;
   totalRowsAttempted: number;
-  errors?: string[];
-  errorMessages?: string[];
+  errorMessages: string[];
 }
 
 export interface UploadAcademicRecordsCsvDTO {

@@ -79,17 +79,14 @@ export default function Profile() {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold bg-gradient-to-r from-edusync-primary to-edusync-accent bg-clip-text text-transparent">
           My Profile
         </h1>
       </div>
 
-      {/* Profile Header Card */}
       <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-soft p-8 border border-gray-200/50">
         <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8">
-          {/* Avatar Section */}
           <div className="relative group">
             <div className="w-32 h-32 rounded-2xl border-4 border-edusync-primary/20 overflow-hidden bg-gradient-to-br from-edusync-primary/10 to-edusync-accent/10">
               <img
@@ -104,7 +101,6 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Basic Info */}
           <div className="flex-1 text-center lg:text-left">
             <div className="mb-6">
               <h2 className="text-3xl font-bold text-gray-800 mb-2">{profile.fullName}</h2>

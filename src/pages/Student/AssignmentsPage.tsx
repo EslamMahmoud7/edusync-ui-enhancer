@@ -27,7 +27,6 @@ const fetchAssignments = async (): Promise<Assignment[]> => {
   if (!stored) throw new Error("Not logged in");
   const { id: studentId, token } = JSON.parse(stored);
 
-  // The 'any' type is acceptable here since we are manually mapping
   const { data } = await api.get<Array<any>>(`/api/assignment/student/${studentId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -52,7 +51,7 @@ const fetchAssignments = async (): Promise<Assignment[]> => {
       submissionTitle: a.submissionTitle,
       submissionLink: a.submissionLink,
       instructorNotes: a.instructorNotes,
-      submissionId: a.submissionId, // This will now be populated from the API
+      submissionId: a.submissionId, 
     };
   });
 };
@@ -156,7 +155,6 @@ export default function AssignmentsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Search and Filter UI */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold bg-gradient-to-r from-edusync-primary to-edusync-accent bg-clip-text text-transparent">Assignments</h1>
         <div className="text-sm text-gray-500">{filtered.length} assignment{filtered.length !== 1 ? "s" : ""} found</div>
@@ -176,7 +174,6 @@ export default function AssignmentsPage() {
         </div>
       </div>
 
-      {/* Assignment Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {filtered.map((assignment) => {
           const statusConfig = {
@@ -216,7 +213,6 @@ export default function AssignmentsPage() {
         })}
       </div>
 
-      {/* Details Modal */}
       {selected && (
         <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
           <DialogContent>
@@ -238,7 +234,6 @@ export default function AssignmentsPage() {
         </Dialog>
       )}
 
-      {/* Edit Submission Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle className="flex items-center gap-2"><Edit3 className="h-5 w-5 text-primary" /> Edit Submission</DialogTitle></DialogHeader>
