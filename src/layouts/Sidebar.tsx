@@ -21,7 +21,7 @@
   interface SidebarProps {
     isOpen: boolean;
     onClose: () => void;
-    role: 1 | 2 | 3; // 1: Student, 2: Admin, 3: Instructor
+    role: 1 | 2 | 3;
   }
 
   interface MenuItem {
@@ -145,7 +145,6 @@
 
       return (
         <>
-          {/* Backdrop */}
           <div
             className={`fixed inset-0 bg-black/20 backdrop-blur-sm z-40 transition-all duration-300 ${
               isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
@@ -153,7 +152,6 @@
             onClick={onClose}
           />
 
-          {/* Sidebar */}
           <div
             ref={ref}
             className={`fixed left-0 top-0 h-full w-72 bg-white/95 backdrop-blur-xl border-r border-gray-200/50 shadow-glass z-50 transform transition-all duration-300 ease-in-out ${
@@ -161,7 +159,6 @@
             }`}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
             <div className="p-6 border-b border-gray-200/50 bg-gradient-to-r from-edusync-primary/5 to-edusync-accent/5">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
@@ -185,7 +182,6 @@
               </div>
             </div>
 
-            {/* Navigation */}
             <div className="flex-1 overflow-y-auto p-4">
               <nav className="space-y-1">
                 {menuItems.map((item, index) =>
@@ -220,7 +216,6 @@
                         />
                       </button>
                       
-                      {/* Submenu */}
                       <div className={`overflow-hidden transition-all duration-300 ${
                         openGroups[item.label] ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
                       }`}>
@@ -283,7 +278,6 @@
               </nav>
             </div>
 
-            {/* Footer */}
             <div className="p-4 border-t border-gray-200/50 bg-gradient-to-r from-gray-50/50 to-gray-100/50">
               <div className="text-center">
                 <p className="text-xs text-gray-500">

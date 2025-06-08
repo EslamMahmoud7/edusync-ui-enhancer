@@ -180,7 +180,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* Welcome Header */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-edusync-primary via-edusync-secondary to-edusync-accent p-8 text-white">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10">
@@ -199,7 +198,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Post Announcement Section */}
       <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 dark:border-gray-700/50 p-6">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-3">
           <Megaphone className="h-6 w-6 text-edusync-primary" />
@@ -262,7 +260,6 @@ export default function AdminDashboard() {
         </Form>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => (
           <div
@@ -292,7 +289,6 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Quick Actions */}
       <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 dark:border-gray-700/50 p-6">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-3">
           <Plus className="h-6 w-6 text-edusync-primary" />

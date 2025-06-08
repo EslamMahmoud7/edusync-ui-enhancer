@@ -2,7 +2,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 0 | 1 | 2 | 3; // 0: Student (legacy), 1: Student, 2: Admin, 3: Instructor
+  role: 0 | 1 | 2 | 3; 
   token: string;
 }
 
@@ -12,7 +12,7 @@ export interface UserDTO {
   lastName: string;
   email: string;
   token: string;
-  role: 0 | 1 | 2 | 3; // 0: Student (legacy), 1: Student, 2: Admin, 3: Instructor
+  role: 0 | 1 | 2 | 3;
 }
 
 export interface AuthContextType {
@@ -23,7 +23,6 @@ export interface AuthContextType {
   loading: boolean;
 }
 
-// New DTOs for the group-centric system
 export interface CourseDto {
   id: string;
   code: string;
@@ -74,7 +73,7 @@ export interface AssignmentDTO {
   title: string;
   description: string;
   dueDate: string;
-  status: 0 | 1 | 2; // 0: Pending, 1: Submitted, 2: Graded
+  status: 0 | 1 | 2;
   groupId: string;
   groupLabel: string;
   courseTitle: string;

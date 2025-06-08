@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Search, Calendar as CalendarIcon, Table, ChevronLeft, ChevronRight, Clock, MapPin, User } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar"; // This seems unused directly, but likely part of ui/calendar
+import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import { format, parseISO, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval,
 import api from "../../services/api";
 
 interface ScheduleDTO {
-  date: string; // Should be 'yyyy-MM-dd' after processing
+  date: string; 
   day: string;
   time: string;
   subject: string;
@@ -26,11 +26,10 @@ const subjectColors: Record<string, string> = {
   "Physics": "bg-indigo-500",
   "Chemistry": "bg-pink-500",
   "English": "bg-orange-500",
-  // Add more subjects and their colors as needed
 };
 
 const getSubjectColor = (subject: string) => {
-  return subjectColors[subject] || "bg-gray-500"; // Default color
+  return subjectColors[subject] || "bg-gray-500"; 
 };
 
 export default function SchedulePage() {
@@ -60,15 +59,14 @@ export default function SchedulePage() {
 
         const expandedSchedule: ScheduleDTO[] = [];
         apiData.forEach((baseClass) => {
-          // Ensure the base date is just 'yyyy-MM-dd' before parsing
           const initialDateString = baseClass.date.split("T")[0];
           const initialDate = parseISO(initialDateString);
 
-          for (let weekOffset = 0; weekOffset < 12; weekOffset++) { // 0 for original week, 1-11 for the next 11 weeks
+          for (let weekOffset = 0; weekOffset < 12; weekOffset++) {
             const eventDate = addWeeks(initialDate, weekOffset);
             expandedSchedule.push({
-              ...baseClass, // Includes original day, time, subject, room, doctor
-              date: format(eventDate, "yyyy-MM-dd"), // Override date with the calculated date for this occurrence
+              ...baseClass,
+              date: format(eventDate, "yyyy-MM-dd"), 
             });
           }
         });
@@ -83,11 +81,10 @@ export default function SchedulePage() {
     }
 
     fetchSchedule();
-  }, []); // Fetch schedule once on component mount
+  }, []);
 
   const getClassesForDate = (date: Date) => {
     const dateStr = format(date, "yyyy-MM-dd");
-    // Filter based on the search term as well for consistency in calendar day cells
     return schedule.filter(cls => {
       const matchesDate = cls.date === dateStr;
       const matchesSearch =
@@ -99,23 +96,19 @@ export default function SchedulePage() {
   };
 
   const getClassesForSelectedDate = () => {
-     // For the detailed view of selected date, we might not want to apply search term filter,
-     // or apply it consistently. Here, we use the same logic as getClassesForDate.
     return getClassesForDate(selectedDate);
   };
 
-  // For table view, filter the entire expanded schedule
   const filteredScheduleForTable = schedule.filter((cls) => {
     const matchesSearch =
       cls.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cls.room.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cls.doctor.toLowerCase().includes(searchTerm.toLowerCase());
-    // Optionally, you might want to filter by date range if the table shows many weeks
     return matchesSearch;
-  }).sort((a,b) => parseISO(a.date).getTime() - parseISO(b.date).getTime() || a.time.localeCompare(b.time)); // Sort for table view
+  }).sort((a,b) => parseISO(a.date).getTime() - parseISO(b.date).getTime() || a.time.localeCompare(b.time));
 
   const weekDays = eachDayOfInterval({
-    start: startOfWeek(currentWeek, { weekStartsOn: 1 }), // Assuming week starts on Monday
+    start: startOfWeek(currentWeek, { weekStartsOn: 1 }),
     end: endOfWeek(currentWeek, { weekStartsOn: 1 })
   });
 
@@ -129,7 +122,7 @@ export default function SchedulePage() {
 
   if (error) {
     return (
-      <div className="space-y-8 p-4 md:p-6"> {/* Added padding for error message */}
+      <div className="space-y-8 p-4 md:p-6">
         <Card className="border-red-200 bg-red-50">
             <CardHeader>
                 <CardTitle className="text-red-700">Error Loading Schedule</CardTitle>
@@ -146,8 +139,7 @@ export default function SchedulePage() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6"> {/* Added padding for the main content */}
-      {/* Header */}
+    <div className="space-y-6 p-4 md:p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Class Schedule</h1>
@@ -155,7 +147,6 @@ export default function SchedulePage() {
         </div>
         
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          {/* Search */}
           <div className="relative flex-grow sm:flex-grow-0">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <input
@@ -167,7 +158,6 @@ export default function SchedulePage() {
             />
           </div>
           
-          {/* View Toggle */}
           <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
             <Button
               variant={viewMode === "calendar" ? "default" : "ghost"}
@@ -193,14 +183,13 @@ export default function SchedulePage() {
 
       {viewMode === "calendar" ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Calendar */}
           <div className="lg:col-span-2">
             <Card className="p-4 sm:p-6 bg-white dark:bg-gray-800">
               <CardHeader className="pb-4 px-0 sm:px-2">
                 <div className="flex items-center justify-between">
                   <Button
                     variant="outline"
-                    size="icon" // Changed to icon for smaller button
+                    size="icon" 
                     onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}
                     className="dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
                   >
@@ -211,7 +200,7 @@ export default function SchedulePage() {
                   </h3>
                   <Button
                     variant="outline"
-                    size="icon" // Changed to icon
+                    size="icon" 
                     onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}
                     className="dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
                   >
@@ -229,7 +218,7 @@ export default function SchedulePage() {
                 </div>
                 <div className="grid grid-cols-7 gap-1 sm:gap-2">
                   {weekDays.map(day => {
-                    const classes = getClassesForDate(day); // Search term is applied here
+                    const classes = getClassesForDate(day);
                     const isSelected = isSameDay(day, selectedDate);
                     const isToday = isSameDay(day, new Date());
                     
@@ -251,7 +240,7 @@ export default function SchedulePage() {
                           {format(day, 'd')}
                         </div>
                         <div className="space-y-1">
-                          {classes.slice(0, 2).map((cls, idx) => ( // Show fewer classes in the cell to avoid overflow
+                          {classes.slice(0, 2).map((cls, idx) => (
                             <div
                               key={idx}
                               className={`text-[10px] sm:text-xs p-1 rounded text-white truncate ${getSubjectColor(cls.subject)}`}
@@ -274,7 +263,6 @@ export default function SchedulePage() {
             </Card>
           </div>
 
-          {/* Selected Day Details */}
           <div className="lg:col-span-1">
             <Card className="sticky top-6 bg-white dark:bg-gray-800">
               <CardHeader>
@@ -325,7 +313,6 @@ export default function SchedulePage() {
           </div>
         </div>
       ) : (
-        /* Table View */
         <Card className="bg-white dark:bg-gray-800">
           <CardHeader>
             <CardTitle className="text-gray-900 dark:text-gray-100">Schedule Table</CardTitle>

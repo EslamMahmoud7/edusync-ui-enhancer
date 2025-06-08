@@ -4,7 +4,7 @@ import { useAuth } from "../Context/useAuth";
 
 interface RoleGuardProps {
   children: React.ReactNode;
-  allowedRoles: Array<0 | 1 | 2 | 3>; // 0: Student (legacy), 1: Student, 2: Admin, 3: Instructor
+  allowedRoles: Array<0 | 1 | 2 | 3>;
   redirectTo?: string;
 }
 
@@ -27,13 +27,11 @@ const RoleGuard: React.FC<RoleGuardProps> = ({
     return <Navigate to="/login" replace />;
   }
 
-  // Normalize role 0 to role 1 for checking
   const normalizedRole = user.role === 0 ? 1 : user.role;
   
   if (!allowedRoles.includes(user.role) && !allowedRoles.includes(normalizedRole)) {
-    // Redirect to appropriate dashboard based on user's role
     const dashboardRoutes = {
-      0: "/student-dashboard", // Legacy student role
+      0: "/student-dashboard",
       1: "/student-dashboard",
       2: "/admin-dashboard", 
       3: "/instructor-dashboard"

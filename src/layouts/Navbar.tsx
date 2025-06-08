@@ -10,7 +10,7 @@ import type { AnnouncementDTO } from '../types/announcement';
 
 interface NavbarProps {
   toggleSidebar: () => void;
-  role: 1 | 2 | 3; // Updated to accept numeric roles
+  role: 1 | 2 | 3;
 }
 
 export default function Navbar({ toggleSidebar, role }: NavbarProps) {
@@ -39,14 +39,12 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
     navigate("/login");
   };
 
-  // Convert numeric role to string for navigation paths, handle legacy role 0
   const roleString = (role === 2) ? "admin" : "student";
 
   return (
     <nav className="sticky top-0 z-40 backdrop-blur-lg bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/50 dark:border-gray-700/50 shadow-soft">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Left Section */}
           <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
             <button
               onClick={toggleSidebar}
@@ -75,14 +73,11 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
           </div>
 
 
-          {/* Right Section */}
           <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            {/* Mobile Search */}
             <button className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-edusync-primary hover:bg-edusync-primary/10 transition-all duration-200 md:hidden">
               <Search className="h-5 w-5" />
             </button>
 
-            {/* Language Selector */}
             <div className="relative">
               <button
                 onClick={() => setShowLanguageMenu(!showLanguageMenu)}
@@ -121,7 +116,6 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
               )}
             </div>
 
-            {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-edusync-primary hover:bg-edusync-primary/10 transition-all duration-200"
@@ -129,7 +123,6 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
               {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
 
-            {/* Notifications */}
             <div className="relative">
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
@@ -199,7 +192,6 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
               )}
             </div>
 
-            {/* Logout */}
             <button
               onClick={handleLogout}
               className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-edusync-error hover:bg-edusync-error/10 transition-all duration-200 transform hover:scale-105 active:scale-95"
@@ -211,7 +203,6 @@ export default function Navbar({ toggleSidebar, role }: NavbarProps) {
         </div>
       </div>
 
-      {/* Click outside overlays */}
       {(showNotifications || showLanguageMenu) && (
         <div
           className="fixed inset-0 z-30"

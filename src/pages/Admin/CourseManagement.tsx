@@ -229,7 +229,6 @@ export default function CourseManagement() {
         </Table>
       </div>
 
-      {/* Edit Dialog */}
       <Dialog open={!!editingCourse} onOpenChange={() => setEditingCourse(null)}>
         <DialogContent>
           <DialogHeader>

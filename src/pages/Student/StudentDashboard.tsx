@@ -204,7 +204,6 @@ export default function StudentDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* Welcome Header */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-edusync-primary via-edusync-secondary to-edusync-accent p-8 text-white">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10">

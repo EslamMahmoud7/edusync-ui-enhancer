@@ -21,14 +21,12 @@ export default function QuizTaking() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Use a ref to make sure the interval can be accessed for cleanup
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (quizId && user?.id) {
       initializeQuiz();
     }
-    // Cleanup timer on component unmount
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -37,18 +35,16 @@ export default function QuizTaking() {
   }, [quizId, user?.id, action]);
 
   useEffect(() => {
-    // Clear any existing timer before starting a new one
     if (timerRef.current) {
       clearInterval(timerRef.current);
     }
     
-    // Only start the countdown if there is time remaining
     if (timeRemaining > 0) {
       timerRef.current = setInterval(() => {
         setTimeRemaining(prev => {
           if (prev <= 1) {
             if (timerRef.current) clearInterval(timerRef.current);
-            handleAutoSubmit(); // Auto-submit when time is up
+            handleAutoSubmit();
             return 0;
           }
           return prev - 1;
@@ -79,16 +75,13 @@ export default function QuizTaking() {
       });
       setAnswers(initialAnswers);
 
-      // ✅ Corrected Timer Logic
       if (action === 'resume') {
-        // For resuming, calculate the time left based on the original start time
         const startTime = new Date(attemptData.startTime);
         const durationMs = attemptData.durationMinutes * 60 * 1000;
         const elapsedMs = Date.now() - startTime.getTime();
         const remainingSeconds = Math.max(0, Math.floor((durationMs - elapsedMs) / 1000));
         setTimeRemaining(remainingSeconds);
       } else {
-        // For a new quiz, just set the timer to the full duration
         setTimeRemaining(attemptData.durationMinutes * 60);
       }
 
@@ -109,11 +102,9 @@ export default function QuizTaking() {
   };
   
   const submitQuizFlow = async () => {
-    // Prevent double submissions
     if (isSubmitting || !attempt || !user?.id) return;
     setIsSubmitting(true);
     
-    // Stop the timer
     if (timerRef.current) {
         clearInterval(timerRef.current);
     }
@@ -132,7 +123,7 @@ export default function QuizTaking() {
     } catch (error) {
       console.error('Error submitting quiz:', error);
       alert('Error submitting quiz');
-      setIsSubmitting(false); // Allow re-submission on error
+      setIsSubmitting(false);
     }
   };
 
@@ -159,7 +150,6 @@ export default function QuizTaking() {
     return (answeredQuestions / attempt.questions.length) * 100;
   };
 
-  // ... (rest of your JSX code remains the same)
 
   if (loading) {
     return (
@@ -188,7 +178,6 @@ export default function QuizTaking() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
       <div className="bg-white dark:bg-gray-800 shadow-sm border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
@@ -217,7 +206,6 @@ export default function QuizTaking() {
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Question Navigation Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sticky top-24">
               <h3 className="font-semibold mb-4">Questions</h3>
@@ -241,7 +229,6 @@ export default function QuizTaking() {
             </div>
           </div>
 
-          {/* Main Question Area */}
           <div className="lg:col-span-3">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8">
               <div className="mb-6">

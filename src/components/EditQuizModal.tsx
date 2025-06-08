@@ -47,7 +47,6 @@ export default function EditQuizModal({ isOpen, onClose, quiz, onQuizUpdated }: 
     setLoading(true);
 
     try {
-      // ✅ Create the complete data packet here, including the instructorId
       const dataToSubmit: UpdateQuizDTO = {
         ...formData,
         requestingInstructorId: user.id,
@@ -55,7 +54,7 @@ export default function EditQuizModal({ isOpen, onClose, quiz, onQuizUpdated }: 
 
       const updatedQuiz = await quizService.updateQuiz(quiz.id, dataToSubmit);
       onQuizUpdated(updatedQuiz);
-      onClose(); // Close the modal on success
+      onClose();
     } catch (error) {
       console.error('Error updating quiz:', error);
       alert('Error updating quiz');

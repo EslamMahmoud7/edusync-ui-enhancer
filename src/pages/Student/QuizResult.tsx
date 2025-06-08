@@ -92,7 +92,6 @@ export default function QuizResult() {
         </Button>
       </div>
 
-      {/* Score Summary */}
       <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 dark:border-gray-700/50 p-8">
         <div className="text-center mb-8">
           <div className="mb-4">
@@ -145,7 +144,6 @@ export default function QuizResult() {
         </div>
       </div>
 
-      {/* Detailed Review */}
       <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-soft border border-gray-200/50 dark:border-gray-700/50 p-6">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
           <FileText className="h-6 w-6" />

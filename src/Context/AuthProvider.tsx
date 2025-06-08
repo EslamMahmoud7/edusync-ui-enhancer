@@ -8,7 +8,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for saved user from localStorage
     const savedUser = localStorage.getItem('eduSyncUser');
     if (savedUser) {
       try {

@@ -12,7 +12,6 @@ export default function Layout() {
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
   const closeSidebar = () => setIsSidebarOpen(false);
 
-  // Close on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -26,13 +25,11 @@ export default function Layout() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Default to student role if no user or role, handle legacy role 0
   const role = user?.role ?? 1;
   const normalizedRole = role === 0 ? 1 : role;
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-edusync-surface via-white to-edusync-surface/50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900/50">
-      {/* Enhanced background pattern */}
       <div className="fixed inset-0 opacity-5 pointer-events-none">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,theme(colors.edusync.primary)_0%,transparent_50%)]"></div>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,theme(colors.edusync.accent)_0%,transparent_50%)]"></div>
