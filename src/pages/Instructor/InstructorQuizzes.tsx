@@ -1,8 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Plus, Calendar, Users, BookOpen, Clock, FileText, Badge } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '../../Context/useAuth';
 import { quizService } from '../../services/quiz';
 import type { QuizDTO } from '../../types/quiz';
 import { useNavigate } from 'react-router-dom';
@@ -12,7 +10,6 @@ export default function InstructorQuizzes() {
   const [quizzes, setQuizzes] = useState<QuizDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,10 +18,8 @@ export default function InstructorQuizzes() {
 
   const fetchQuizzes = async () => {
     try {
-      if (user?.id) {
-        const data = await quizService.getInstructorQuizzes(user.id);
-        setQuizzes(data);
-      }
+      const data = await quizService.getMyQuizzesAsInstructor();
+      setQuizzes(data);
     } catch (error) {
       console.error('Error fetching quizzes:', error);
     } finally {

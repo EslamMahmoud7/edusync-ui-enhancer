@@ -1,3 +1,4 @@
+
   import { forwardRef, useEffect, useState, useCallback } from "react";
   import { NavLink, useLocation } from "react-router-dom";
   import {
@@ -47,6 +48,11 @@
       icon: <ClipboardList size={18} />,
     },
     {
+      label: "Quizzes",
+      path: "/quizzes",
+      icon: <FileQuestion size={18} />,
+    },
+    {
       label: "Academic Records",
       path: "/academicRecords",
       icon: <BarChart2 size={18} />,
@@ -91,6 +97,11 @@
       label: "Assignments",
       path: "/instructor/assignments",
       icon: <ClipboardList size={18} />,
+    },
+    {
+      label: "Quizzes",
+      path: "/instructor/quizzes",
+      icon: <FileQuestion size={18} />,
     },
     {
       label: "Grading",

@@ -8,27 +8,10 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const userString = localStorage.getItem('eduSyncUser');
-    let token = null;
-    
-    if (userString) {
-      try {
-        const user = JSON.parse(userString);
-        token = user.token;
-      } catch (error) {
-        console.error('Error parsing user from localStorage:', error);
-      }
-    }
-    
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    
     console.log('API Request:', {
       url: config.url,
       method: config.method,
       headers: config.headers,
-      hasToken: !!token
     });
     
     return config;

@@ -12,7 +12,6 @@ import { quizService } from '../services/quiz';
 import { groupService } from '../services/group';
 import type { CreateQuizDTO, QuizDTO } from '../types/quiz';
 import type { GroupDTO } from '../types/group';
-import { useAuth } from '../Context/useAuth';
 
 interface CreateQuizModalProps {
   isOpen: boolean;
@@ -29,24 +28,23 @@ export default function CreateQuizModal({ isOpen, onClose, onQuizCreated }: Crea
     durationMinutes: 60,
     maxAttempts: 1,
     shuffleQuestions: false,
-    isPublished: false,
-    instructorId: ''
+    isPublished: false
   });
   const [groups, setGroups] = useState<GroupDTO[]>([]);
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
 
   useEffect(() => {
-    if (isOpen && user?.id) {
+    if (isOpen) {
       fetchGroups();
-      setFormData(prev => ({ ...prev, instructorId: user.id }));
     }
-  }, [isOpen, user?.id]);
+  }, [isOpen]);
 
   const fetchGroups = async () => {
     try {
-      if (user?.id) {
-        const data = await groupService.getInstructorGroups(user.id);
+      const userString = localStorage.getItem('eduSyncUser');
+      if (userString) {
+        const user = JSON.parse(userString);
+        const data = await groupService.getByInstructor(user.id);
         setGroups(data);
       }
     } catch (error) {
@@ -59,9 +57,13 @@ export default function CreateQuizModal({ isOpen, onClose, onQuizCreated }: Crea
     setLoading(true);
 
     try {
-      const quiz = await quizService.createQuiz(formData);
-      onQuizCreated(quiz);
-      handleClose();
+      const userString = localStorage.getItem('eduSyncUser');
+      if (userString) {
+        const user = JSON.parse(userString);
+        const quiz = await quizService.createQuiz({ ...formData, instructorId: user.id });
+        onQuizCreated(quiz);
+        handleClose();
+      }
     } catch (error) {
       console.error('Error creating quiz:', error);
       alert('Error creating quiz');
@@ -79,8 +81,7 @@ export default function CreateQuizModal({ isOpen, onClose, onQuizCreated }: Crea
       durationMinutes: 60,
       maxAttempts: 1,
       shuffleQuestions: false,
-      isPublished: false,
-      instructorId: user?.id || ''
+      isPublished: false
     });
     onClose();
   };
