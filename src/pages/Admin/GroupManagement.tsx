@@ -20,7 +20,6 @@ import { Badge } from '@/components/ui/badge';
 import { exportToCSV } from '@/utils/csvExport';
 
 export default function GroupManagement() {
-  // Helper to turn "YYYY-MM-DDTHH:mm" into "YYYY-MM-DDTHH:mm:00"
   function toFullDateTime(dateTimeLocal: string): string {
     return `${dateTimeLocal}:00`;
   }

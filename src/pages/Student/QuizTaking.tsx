@@ -32,14 +32,14 @@ export default function QuizTaking() {
         clearInterval(timerRef.current);
       }
     };
-  }, [quizId, user?.id, action]);
+  }, [quizId, user?.id]);
 
   useEffect(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
     }
     
-    if (timeRemaining > 0) {
+    if (!loading && timeRemaining > 0) {
       timerRef.current = setInterval(() => {
         setTimeRemaining(prev => {
           if (prev <= 1) {
@@ -51,9 +51,10 @@ export default function QuizTaking() {
         });
       }, 1000);
     }
-  }, [timeRemaining]);
+  }, [timeRemaining, loading]);
 
   const initializeQuiz = async () => {
+    setLoading(true);
     try {
       if (!quizId || !user?.id) return;
 
@@ -76,11 +77,16 @@ export default function QuizTaking() {
       setAnswers(initialAnswers);
 
       if (action === 'resume') {
-        const startTime = new Date(attemptData.startTime);
+        const startTime = new Date(attemptData.startTime).getTime();
         const durationMs = attemptData.durationMinutes * 60 * 1000;
-        const elapsedMs = Date.now() - startTime.getTime();
-        const remainingSeconds = Math.max(0, Math.floor((durationMs - elapsedMs) / 1000));
-        setTimeRemaining(remainingSeconds);
+        const endTime = startTime + durationMs;
+        const remainingSeconds = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+        
+        if (remainingSeconds <= 0) {
+          handleAutoSubmit();
+        } else {
+          setTimeRemaining(remainingSeconds);
+        }
       } else {
         setTimeRemaining(attemptData.durationMinutes * 60);
       }
@@ -95,10 +101,7 @@ export default function QuizTaking() {
   };
 
   const handleAnswerSelect = (questionId: string, optionId: string) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: optionId
-    }));
+    setAnswers(prev => ({ ...prev, [questionId]: optionId }));
   };
   
   const submitQuizFlow = async () => {
@@ -128,14 +131,16 @@ export default function QuizTaking() {
   };
 
   const handleSubmit = () => {
-    if (confirm('Are you sure you want to submit your quiz? This action cannot be undone.')) {
+    if (confirm('Are you sure you want to submit your quiz?')) {
       submitQuizFlow();
     }
   };
   
   const handleAutoSubmit = () => {
-    alert("Time's up! Your quiz will now be submitted automatically.");
-    submitQuizFlow();
+    if (!isSubmitting) {
+      alert("Time's up! Your quiz will now be submitted automatically.");
+      submitQuizFlow();
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -149,7 +154,6 @@ export default function QuizTaking() {
     const answeredQuestions = Object.values(answers).filter(Boolean).length;
     return (answeredQuestions / attempt.questions.length) * 100;
   };
-
 
   if (loading) {
     return (
@@ -178,6 +182,7 @@ export default function QuizTaking() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Header */}
       <div className="bg-white dark:bg-gray-800 shadow-sm border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
@@ -229,6 +234,7 @@ export default function QuizTaking() {
             </div>
           </div>
 
+          {/* Main Question Area */}
           <div className="lg:col-span-3">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8">
               <div className="mb-6">

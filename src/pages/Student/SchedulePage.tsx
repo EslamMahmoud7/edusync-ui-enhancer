@@ -340,7 +340,7 @@ export default function SchedulePage() {
                   
                   return (
                     <TableRow 
-                      key={`${cls.date}-${cls.time}-${cls.subject}-${i}`} // More unique key
+                      key={`${cls.date}-${cls.time}-${cls.subject}-${i}`}
                       className={`${isToday ? "bg-edusync-primary/5 dark:bg-edusync-primary/10" : "dark:border-gray-700"} hover:bg-gray-50 dark:hover:bg-gray-700/50`}
                     >
                       <TableCell className="font-medium text-gray-800 dark:text-gray-200">

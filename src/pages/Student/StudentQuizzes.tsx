@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Users, Play, RotateCcw, Eye } from 'lucide-react';
+import { Calendar, Clock, Play, RotateCcw, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '../../Context/useAuth';
 import { quizService } from '../../services/quiz';
@@ -14,47 +14,31 @@ export default function StudentQuizzes() {
 
   useEffect(() => {
     if (user?.id) {
-      fetchQuizzes();
+      fetchQuizzes(user.id);
     } else {
       setLoading(false);
     }
-  }, [user]);
+  }, [user?.id]);
 
-  const fetchQuizzes = async () => {
+  const fetchQuizzes = async (studentId: string) => {
     setLoading(true);
     try {
-      if (user?.id) {
-        const data = await quizService.getAvailableQuizzes(user.id);
-        setQuizzes(data);
-      }
+      const data = await quizService.getAvailableQuizzes(studentId);
+      setQuizzes(data);
     } catch (error) {
       console.error('Error fetching quizzes:', error);
     } finally {
       setLoading(false);
     }
   };
-
+  
   const getActionButton = (quiz: StudentQuizListItemDTO) => {
-    const { lastAttemptStatus, attemptsMade, maxAttempts, lastAttemptId } = quiz;
+    const { lastAttemptStatus, lastAttemptId, quizId } = quiz;
 
-    if (attemptsMade >= maxAttempts && lastAttemptStatus !== 'InProgress') {
-      return (
-        <Button
-          onClick={() => navigate(`/student/quiz-result/${lastAttemptId}`)}
-          variant="outline"
-          className="w-full"
-          disabled={!lastAttemptId}
-        >
-          <Eye className="h-4 w-4 mr-2" />
-          View Results
-        </Button>
-      );
-    }
-    
     if (lastAttemptStatus === 'InProgress') {
       return (
         <Button
-          onClick={() => navigate(`/student/quiz-info/${quiz.quizId}?action=resume`)}
+          onClick={() => navigate(`/student/quiz-info/${quizId}?action=resume`)}
           className="w-full bg-yellow-500 hover:bg-yellow-600 text-white"
         >
           <RotateCcw className="h-4 w-4 mr-2" />
@@ -63,32 +47,22 @@ export default function StudentQuizzes() {
       );
     }
 
-    if ((lastAttemptStatus === 'Submitted' || lastAttemptStatus === 'Graded') && attemptsMade < maxAttempts) {
+    if (lastAttemptId) {
       return (
-        <div className="space-y-2">
-          <Button
-            onClick={() => navigate(`/student/quiz-result/${lastAttemptId}`)}
-            variant="outline"
-            className="w-full"
-            disabled={!lastAttemptId}
-          >
-            <Eye className="h-4 w-4 mr-2" />
-            View Last Result
-          </Button>
-          <Button
-            onClick={() => navigate(`/student/quiz-info/${quiz.quizId}?action=start`)}
-            className="w-full bg-edusync-primary hover:bg-edusync-secondary"
-          >
-            <Play className="h-4 w-4 mr-2" />
-            Start New Attempt
-          </Button>
-        </div>
+        <Button
+          onClick={() => navigate(`/student/quiz-result/${lastAttemptId}`)}
+          variant="outline"
+          className="w-full"
+        >
+          <Eye className="h-4 w-4 mr-2" />
+          View Results
+        </Button>
       );
     }
-    
+
     return (
       <Button
-        onClick={() => navigate(`/student/quiz-info/${quiz.quizId}?action=start`)}
+        onClick={() => navigate(`/student/quiz-info/${quizId}?action=start`)}
         className="w-full bg-edusync-primary hover:bg-edusync-secondary"
       >
         <Play className="h-4 w-4 mr-2" />
@@ -143,17 +117,10 @@ export default function StudentQuizzes() {
                   <Clock className="h-4 w-4" />
                   <span>{quiz.durationMinutes} minutes</span>
                 </div>
-
-                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                  <Users className="h-4 w-4" />
-                  <span>
-                    Attempts: {quiz.attemptsMade}/{quiz.maxAttempts}
-                  </span>
-                </div>
               </div>
             </div>
 
-            <div className="mt-auto">
+            <div className="mt-auto pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
               {getActionButton(quiz)}
             </div>
           </div>
