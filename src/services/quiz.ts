@@ -12,7 +12,6 @@ import type {
 } from '../types/quiz';
 
 export const quizService = {
-  // --- INSTRUCTOR ENDPOINTS ---
 
   createQuiz: async (data: CreateQuizDTO): Promise<QuizDTO> => {
     const response = await api.post('/api/Quiz', data);
@@ -63,7 +62,6 @@ export const quizService = {
     return response.data;
   },
 
-  // --- STUDENT ENDPOINTS ---
 
   getAvailableQuizzes: async (studentId: string): Promise<StudentQuizListItemDTO[]> => {
     const response = await api.get(`/api/Quiz/student/available?studentId=${studentId}`);

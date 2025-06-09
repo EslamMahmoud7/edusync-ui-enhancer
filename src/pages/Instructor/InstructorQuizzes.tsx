@@ -13,12 +13,10 @@ export default function InstructorQuizzes() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // ✅ 1. Get the instructor ID directly from localStorage.
     const userString = localStorage.getItem('eduSyncUser');
     if (userString) {
       const user = JSON.parse(userString);
       if (user?.id) {
-        // ✅ 2. If an ID exists, call fetchQuizzes with it.
         fetchQuizzes(user.id);
       } else {
         console.error("User object in localStorage is missing an ID.");
@@ -26,14 +24,13 @@ export default function InstructorQuizzes() {
       }
     } else {
       console.error("User not found in localStorage. Please log in.");
-      setLoading(false); // Stop loading if no user is found
+      setLoading(false); 
     }
-  }, []); // ✅ 3. Run only once when the component mounts.
+  }, []); 
 
   const fetchQuizzes = async (instructorId: string) => {
     setLoading(true);
     try {
-      // ✅ 4. Pass the instructorId to the service call.
       const data = await quizService.getMyQuizzesAsInstructor(instructorId);
       setQuizzes(data);
     } catch (error) {

@@ -9,20 +9,19 @@ const Index = () => {
 
   useEffect(() => {
     if (!loading && isAuthenticated && user) {
-      // Redirect to appropriate dashboard based on role
       switch (user.role) {
-        case 0: // Legacy student role
-        case 1: // Student
+        case 0: 
+        case 1:
           navigate("/student-dashboard", { replace: true });
           break;
-        case 2: // Admin
+        case 2:
           navigate("/admin-dashboard", { replace: true });
           break;
-        case 3: // Instructor
+        case 3:
           navigate("/instructor-dashboard", { replace: true });
           break;
         default:
-          navigate("/student-dashboard", { replace: true }); // Default fallback
+          navigate("/student-dashboard", { replace: true });
       }
     }
   }, [user, isAuthenticated, loading, navigate]);
@@ -35,7 +34,6 @@ const Index = () => {
     );
   }
 
-  // This should rarely be shown as users will be redirected
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">

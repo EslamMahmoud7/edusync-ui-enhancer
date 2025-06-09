@@ -6,7 +6,7 @@ export interface MaterialDTO {
   title: string;
   description: string;
   fileUrl: string;
-  type: number; // 0: Document, 1: Video, 2: Other
+  type: number;
   groupId: string;
   groupLabel: string;
   courseTitle: string;

@@ -182,7 +182,6 @@ export default function QuizTaking() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
       <div className="bg-white dark:bg-gray-800 shadow-sm border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
@@ -234,7 +233,6 @@ export default function QuizTaking() {
             </div>
           </div>
 
-          {/* Main Question Area */}
           <div className="lg:col-span-3">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8">
               <div className="mb-6">

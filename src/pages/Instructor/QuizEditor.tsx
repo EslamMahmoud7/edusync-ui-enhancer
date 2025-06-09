@@ -44,7 +44,6 @@ export default function QuizEditor() {
   const fetchAttempts = async () => {
     try {
       if (quizId && user?.id) {
-        // ✅ Corrected: Called the correct function 'getAllAttemptsForQuiz'
         const data = await quizService.getAllAttemptsForQuiz(quizId, user.id);
         setAttempts(data);
       }
@@ -73,7 +72,7 @@ export default function QuizEditor() {
   };
 
   const handleModelAdded = () => {
-    fetchQuizData(); // Refetch quiz data to update models list
+    fetchQuizData(); 
     setIsAddModelModalOpen(false);
   };
 
