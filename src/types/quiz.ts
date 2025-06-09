@@ -86,18 +86,9 @@ export interface StudentQuizAttemptDTO {
   durationMinutes: number;
   startTime: string;
   questions: QuestionDTO[];
-  answers?: { questionId: string; selectedOptionId: string }[];
+  answers?: { questionId: string; selectedOptionId: string }[]; 
 }
 
-export interface StudentQuizAttemptDTO {
-  attemptId: string;
-  quizId: string;
-  quizTitle: string;
-  durationMinutes: number;
-  startTime: string;
-  questions: QuestionDTO[];
-  studentAnswers: StudentAnswerDTO[];
-}
 
 export interface StudentAnswerDTO {
   questionId: string;
